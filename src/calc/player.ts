@@ -1,4 +1,4 @@
-import { Aura } from "./auras"
+import { Aura, Auras } from "./auras"
 import { Spells } from "./spells"
 
 export type UnitState =
@@ -50,13 +50,31 @@ export class StatsHandler {
 export class Player {
   id: string
   stats: StatsHandler
-  combatState: CombatState
   auras: Aura[] = []
+  protected recharges = new Map<Spells, number>()
+
+  hasAura(aura: Auras, opts: { caster?: string } = {}) {
+    const found = this.auras.some((x) => {
+      const match = x.id === aura
+      const casterMatch = opts.caster ? x.caster === opts.caster : true
+      return match && casterMatch
+    })
+    return found
+  }
+
+  canCastSpell(args: { time: number; spell: Spells }) {
+    const found = this.recharges.get(args.spell)
+    if (!found) return true
+    return args.time >= found
+  }
+
+  setSpellRecharge(spell: Spells, time: number) {
+    this.recharges.set(spell, time)
+  }
 
   constructor(args: { id: string }) {
     this.id = args.id
     this.stats = new StatsHandler({ ratings: TEMPLATE_STATS })
-    this.combatState = new CombatState()
   }
 }
 

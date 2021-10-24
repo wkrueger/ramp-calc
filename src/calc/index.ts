@@ -86,6 +86,9 @@ export class EncounterState {
     if (!spellInfo) {
       throw Error("Spell not found.")
     }
+    if (spellInfo.passive) {
+      throw Error(`Spell ${spellId} is passive and cant be invoked.`)
+    }
     let damageTime = this.time + (spellInfo.travelTime || 0)
     const currentTargets = this.getSpellTarget(spellInfo, caster.id).map((t) => t!.id)
     if (spellInfo.cast) {
@@ -133,7 +136,7 @@ export class EncounterState {
           spell: spellInfo.id,
         },
       })
-      const computedGCD = 1.5 / (1 + caster.stats.getHastePct())
+      const computedGCD = (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
       out.scheduledEvents.push({
         time: this.time + computedGCD,
         event: {
@@ -236,7 +239,14 @@ function getHealing(spells: Spells[], player: Player) {
 
 export function sample() {
   // const spells = [...Array(8).fill(Spells.Shield), Spells.Radiance, Spells.Smite, Spells.Smite]
-  const spells = [Spells.Shield, Spells.Radiance, Spells.Solace]
+  const spells = [
+    Spells.Shield,
+    Spells.Boon,
+    Spells.AscendedBlast,
+    Spells.AscendedNova,
+    Spells.AscendedNova,
+    Spells.AscendedBlast,
+  ]
   const player = new Player({ id: "0" })
   return getHealing(spells, player)
 }

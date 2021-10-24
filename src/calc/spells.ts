@@ -1,5 +1,7 @@
+import { EncounterState } from "."
 import { Auras } from "./auras"
-import { StatRatingsIn } from "./player"
+import { CombatEvent } from "./events"
+import { Player, StatRatingsIn } from "./player"
 
 export enum Spells {
   Smite = "smite",
@@ -26,6 +28,8 @@ export enum Targetting {
 export interface Spell {
   id: Spells
   cast: number
+  gcd?: number
+  cooldown?: number
   targetting: Targetting
   targetCount?: number
   applyAura?: Auras
@@ -33,8 +37,11 @@ export interface Spell {
     durationPct?: number // radiance
   }
   travelTime?: number
-  getDamage?: (stats: StatRatingsIn) => number
+  passive?: boolean
+  getDamage?: (stats: StatRatingsIn, player: Player) => number
   getHealing?: (stats: StatRatingsIn) => number
+  onEffect?: (event: CombatEvent, es: EncounterState, caster: Player) => void
+  allowed?: (player: Player) => boolean
 }
 
 const Smite: Spell = {
@@ -68,6 +75,7 @@ const Atonement: Spell = {
   id: Spells.Atonement,
   targetting: Targetting.None,
   cast: 0,
+  passive: true,
 }
 
 const Solace: Spell = {
@@ -94,6 +102,58 @@ const Radiance: Spell = {
   },
 }
 
+const Boon: Spell = {
+  id: Spells.Boon,
+  targetting: Targetting.Self,
+  cast: 1.5,
+  applyAura: Auras.Boon,
+}
+
+const Blast: Spell = {
+  id: Spells.AscendedBlast,
+  targetting: Targetting.Enemy,
+  cast: 0,
+  travelTime: 0.3,
+  allowed(player) {
+    return player.hasAura(Auras.Boon)
+  },
+  getDamage({ intellect }) {
+    return 1.79 * intellect
+  },
+  onEffect(ev, encounter, player) {
+    const aura = player.auras.find((x) => x.id === Auras.Boon)!
+    aura.stacks = (aura.stacks || 1) + 5
+  },
+}
+
+const Nova: Spell = {
+  id: Spells.AscendedNova,
+  targetting: Targetting.Enemy,
+  cast: 0,
+  gcd: 0.75,
+  allowed(player) {
+    return player.hasAura(Auras.Boon)
+  },
+  getDamage({ intellect }) {
+    return 0.74 * intellect
+  },
+  onEffect(ev, encounter, player) {
+    const aura = player.auras.find((x) => x.id === Auras.Boon)!
+    aura.stacks = (aura.stacks || 1) + 1
+  },
+}
+
+const Eruption: Spell = {
+  id: Spells.AscendedEruption,
+  targetting: Targetting.Enemy,
+  cast: 0,
+  passive: true,
+  getDamage({ intellect }, player) {
+    const aura = player.auras.find((x) => x.id === Auras.Boon)!
+    return 2.1 * intellect * (1 + 0.03 * (aura.stacks || 1))
+  },
+}
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
@@ -101,4 +161,8 @@ export const spells: Record<string, Spell> = {
   [Spells.Atonement]: Atonement,
   [Spells.Solace]: Solace,
   [Spells.Radiance]: Radiance,
+  [Spells.Boon]: Boon,
+  [Spells.AscendedBlast]: Blast,
+  [Spells.AscendedEruption]: Eruption,
+  [Spells.AscendedNova]: Nova,
 }
