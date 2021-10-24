@@ -8,7 +8,7 @@ const Home: NextPage = () => {
   const run = useCallback(() => {
     try {
       const result = sample()
-      setState(result.eventLog)
+      setState(result.eventLog.log)
     } catch (err) {
       console.error(err)
     }

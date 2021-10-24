@@ -39,11 +39,13 @@ export class ScheduledEvents {
           // end of chain
           const newLink: Link = { value: obj, next: null, prev: current }
           current.next = newLink
-          this.tailLink = current
+          this.tailLink = newLink
           return
         } else {
           // insert in middle
           const newLink: Link = { value: obj, next: current.next, prev: current }
+          const oldNext = current.next
+          oldNext.prev = newLink
           current.next = newLink
           return
         }
@@ -67,11 +69,33 @@ export class ScheduledEvents {
   }
 
   all() {
+    let prev: any
     const out: Link["value"][] = []
     let current = this.headLink
     while (current) {
+      if (prev && prev.value.time > current.value.time) {
+        console.log({ prev, current })
+        throw Error("Col not sorted")
+      }
       out.push(current.value)
+      prev = current
       current = current.next
+    }
+    return out
+  }
+
+  allReverse() {
+    let prev: any
+    const out: Link["value"][] = []
+    let current = this.tailLink
+    while (current) {
+      if (prev && prev.value.time < current.value.time) {
+        console.log({ prev, current })
+        throw Error("Col not sorted")
+      }
+      out.push(current.value)
+      prev = current
+      current = current.prev
     }
     return out
   }

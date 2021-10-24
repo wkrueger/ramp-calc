@@ -49,6 +49,7 @@ export class Player {
   id: string
   stats: StatsHandler
   combatState: CombatState
+  auras: Aura[] = []
 
   constructor(args: { id: string }) {
     this.id = args.id
@@ -60,6 +61,7 @@ export class Player {
 export class Enemy {
   id: string
   combatState = new CombatState()
+  auras: Aura[] = []
   constructor(args: { id: string }) {
     this.id = args.id
   }
