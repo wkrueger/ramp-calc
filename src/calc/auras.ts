@@ -34,6 +34,12 @@ const Pain: AuraInfo = {
   },
 }
 
+const Atonement: AuraInfo = {
+  id: Auras.Atonement,
+  duration: 12,
+}
+
 export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Pain]: Pain,
+  [Auras.Atonement]: Atonement,
 }

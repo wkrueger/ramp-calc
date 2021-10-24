@@ -22,6 +22,7 @@ export type CombatEvent =
       source: string
       value: number | null
       calcValue?: boolean
+      sourceEvent?: number //atonement tracking
     }
   | {
       id: number
@@ -44,6 +45,9 @@ export type CombatEvent =
       aura: Auras
       source: string
       target: string
+      auraModifiers?: {
+        durationPct?: number // radiance
+      }
     }
   | {
       id: number
@@ -90,9 +94,40 @@ export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
       const spellInfo = spells[event.spell]
       if (!spellInfo) throw Error("Spell not found.")
       if (spellInfo.getDamage) {
-        const source = encounter.friendlyUnitsIdx.get(event.source)
-        if (!source) throw Error("Source not found.")
-        const value = spellInfo.getDamage(source.stats.getStatRatings())
+        const value = spellInfo.getDamage(caster.stats.getStatRatings())
+        event.value = value
+      }
+    }
+    // atonement
+    for (const unit of encounter.friendlyUnitsIdx.values()) {
+      const hasAtonement = unit.auras.some(
+        (aura) => aura.id === Auras.Atonement && aura.caster === caster.id
+      )
+      if (hasAtonement) {
+        const healValue = (event.value || 0) * caster.stats.getMasteryPct()
+        encounter.scheduledEvents.push({
+          time: encounter.time,
+          event: {
+            type: "heal",
+            id: encounter.createEventId(),
+            source: caster.id,
+            spell: Spells.Atonement,
+            target: unit.id,
+            value: healValue,
+            sourceEvent: event.id,
+          },
+        })
+      }
+    }
+  },
+  heal: (event: PickFromUn<CombatEvent, "heal">, encounter: EncounterState) => {
+    const caster = encounter.friendlyUnitsIdx.get(event.source)
+    if (!caster) throw Error("Caster not found.")
+    if (event.calcValue && event.spell) {
+      const spellInfo = spells[event.spell]
+      if (!spellInfo) throw Error("Spell not found.")
+      if (spellInfo.getHealing) {
+        const value = spellInfo.getHealing(caster.stats.getStatRatings())
         event.value = value
       }
     }
@@ -110,7 +145,8 @@ export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
     if (!auraInfo) {
       throw Error("Aura info not found.")
     }
-    const auraExpireTime = encounter.time + auraInfo.duration
+    const durationModifier = event.auraModifiers?.durationPct ?? 1
+    const auraExpireTime = encounter.time + auraInfo.duration * durationModifier
     target.auras.push({
       id: event.aura,
       appliedAt: encounter.time,

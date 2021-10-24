@@ -27,8 +27,6 @@ export const TEMPLATE_STATS: StatRatingsIn = {
   intellect: 1500,
 }
 
-export type StatScalings = StatRatingsIn
-
 export class StatsHandler {
   protected ratings: StatRatingsIn
 
@@ -42,6 +40,10 @@ export class StatsHandler {
 
   getHastePct() {
     return this.ratings.haste * 0.0005
+  }
+
+  getMasteryPct() {
+    return this.ratings.mastery * 0.001
   }
 }
 

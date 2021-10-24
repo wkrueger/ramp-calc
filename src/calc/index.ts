@@ -46,14 +46,31 @@ export class EncounterState {
     return ++this._eventIdCounter
   }
 
-  getSpellTarget(spellInfo: Spell) {
+  getSpellTarget(spellInfo: Spell, casterId: string) {
     const { targetting } = spellInfo
     if (targetting === Targetting.Enemy) {
-      return this.enemyUnitsIdx.get("e0")
+      return [this.enemyUnitsIdx.get("e0")]
     } else if (targetting === Targetting.Self) {
-      return this.friendlyUnitsIdx.get("0")
+      return [this.friendlyUnitsIdx.get("0")]
+    } else if (targetting === Targetting.Friendly) {
+      const applyAura = spellInfo.applyAura
+      const targetCount = spellInfo.targetCount ?? 1
+      const result: Player[] = []
+      for (const unit of this.friendlyUnitsIdx.values()) {
+        if (applyAura) {
+          const hasAura = unit.auras.some(
+            (aura) => aura.id === applyAura && aura.caster === casterId
+          )
+          if (hasAura) continue
+        }
+        if (result.length < targetCount) {
+          result.push(unit)
+          if (result.length === targetCount) return result
+        }
+      }
+      return result
     }
-    return null
+    throw Error("Could not determine spell target.")
   }
 
   createEventsForSpell(spellId: Spells, source: string) {
@@ -69,12 +86,13 @@ export class EncounterState {
     if (!spellInfo) {
       throw Error("Spell not found.")
     }
-    let damageTime = this.time
-    const currentTarget = this.getSpellTarget(spellInfo)?.id || null
+    let damageTime = this.time + (spellInfo.travelTime || 0)
+    const currentTargets = this.getSpellTarget(spellInfo, caster.id).map((t) => t!.id)
     if (spellInfo.cast) {
       const computedCast = spellInfo.cast / (1 + caster.stats.getHastePct())
       const castEnd = this.time + computedCast
-      damageTime = castEnd
+      damageTime = castEnd + (spellInfo.travelTime || 0)
+      const currentTarget = currentTargets[0]
       out.scheduledEvents.push({
         time: this.time,
         event: {
@@ -111,7 +129,7 @@ export class EncounterState {
           id: this.createEventId(),
           type: "spell_cast_success",
           source: caster.id,
-          target: currentTarget,
+          target: currentTargets[0],
           spell: spellInfo.id,
         },
       })
@@ -124,31 +142,52 @@ export class EncounterState {
         },
       })
     }
-    if (spellInfo.getDamage && currentTarget) {
-      out.scheduledEvents.push({
-        time: damageTime,
-        event: {
-          id: this.createEventId(),
-          type: "dmg",
-          source: caster.id,
-          spell: spellInfo.id,
-          target: currentTarget,
-          value: null,
-          calcValue: true,
-        },
+    if (spellInfo.getDamage && currentTargets.length) {
+      currentTargets.forEach((currentTarget) => {
+        out.scheduledEvents.push({
+          time: damageTime,
+          event: {
+            id: this.createEventId(),
+            type: "dmg",
+            source: caster.id,
+            spell: spellInfo.id,
+            target: currentTarget,
+            value: null,
+            calcValue: true,
+          },
+        })
       })
     }
-    if (spellInfo.applyAura && currentTarget) {
-      out.scheduledEvents.push({
-        time: damageTime,
-        event: {
-          id: this.createEventId(),
-          type: "aura_apply",
-          aura: spellInfo.applyAura,
-          source: source,
-          target: currentTarget,
-        },
-      })
+    if (spellInfo.applyAura && currentTargets.length) {
+      for (const currentTarget of currentTargets) {
+        out.scheduledEvents.push({
+          time: damageTime,
+          event: {
+            id: this.createEventId(),
+            type: "aura_apply",
+            aura: spellInfo.applyAura,
+            source: source,
+            target: currentTarget,
+            auraModifiers: spellInfo.auraModifiers,
+          },
+        })
+      }
+    }
+    if (spellInfo.getHealing && currentTargets.length) {
+      for (const currentTarget of currentTargets) {
+        out.scheduledEvents.push({
+          time: damageTime,
+          event: {
+            id: this.createEventId(),
+            type: "heal",
+            source: caster.id,
+            spell: spellInfo.id,
+            target: currentTarget,
+            value: null,
+            calcValue: true,
+          },
+        })
+      }
     }
     return out
   }
@@ -197,7 +236,7 @@ function getHealing(spells: Spells[], player: Player) {
 
 export function sample() {
   // const spells = [...Array(8).fill(Spells.Shield), Spells.Radiance, Spells.Smite, Spells.Smite]
-  const spells = [Spells.Smite, Spells.Pain]
+  const spells = [Spells.Shield, Spells.Radiance, Spells.Solace]
   const player = new Player({ id: "0" })
   return getHealing(spells, player)
 }
