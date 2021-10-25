@@ -70,7 +70,7 @@ export class EncounterState {
       }
       return result
     }
-    throw Error("Could not determine spell target.")
+    return []
   }
 
   createEventsForSpell(spellId: Spells, source: string) {
@@ -145,7 +145,7 @@ export class EncounterState {
         },
       })
     }
-    if (spellInfo.getDamage && currentTargets.length) {
+    if (spellInfo.getDamage) {
       currentTargets.forEach((currentTarget) => {
         out.scheduledEvents.push({
           time: damageTime,
@@ -161,22 +161,7 @@ export class EncounterState {
         })
       })
     }
-    if (spellInfo.applyAura && currentTargets.length) {
-      for (const currentTarget of currentTargets) {
-        out.scheduledEvents.push({
-          time: damageTime,
-          event: {
-            id: this.createEventId(),
-            type: "aura_apply",
-            aura: spellInfo.applyAura,
-            source: source,
-            target: currentTarget,
-            auraModifiers: spellInfo.auraModifiers,
-          },
-        })
-      }
-    }
-    if (spellInfo.getHealing && currentTargets.length) {
+    if (spellInfo.getHealing) {
       for (const currentTarget of currentTargets) {
         out.scheduledEvents.push({
           time: damageTime,
@@ -188,6 +173,21 @@ export class EncounterState {
             target: currentTarget,
             value: null,
             calcValue: true,
+          },
+        })
+      }
+    }
+    if (spellInfo.applyAura) {
+      for (const currentTarget of currentTargets) {
+        out.scheduledEvents.push({
+          time: damageTime,
+          event: {
+            id: this.createEventId(),
+            type: "aura_apply",
+            aura: spellInfo.applyAura,
+            source: source,
+            target: currentTarget,
+            auraModifiers: spellInfo.auraModifiers,
           },
         })
       }
@@ -225,7 +225,6 @@ export class EncounterState {
       }
 
       currentEvent = this.scheduledEvents.shift()
-      console.log("shift", currentEvent?.event.type)
     }
   }
 }
@@ -239,14 +238,7 @@ function getHealing(spells: Spells[], player: Player) {
 
 export function sample() {
   // const spells = [...Array(8).fill(Spells.Shield), Spells.Radiance, Spells.Smite, Spells.Smite]
-  const spells = [
-    Spells.Shield,
-    Spells.Boon,
-    Spells.AscendedBlast,
-    Spells.AscendedNova,
-    Spells.AscendedNova,
-    Spells.AscendedBlast,
-  ]
+  const spells = [Spells.Shield, Spells.Radiance, Spells.Evangelism]
   const player = new Player({ id: "0" })
   return getHealing(spells, player)
 }

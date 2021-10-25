@@ -1,12 +1,13 @@
 import { CombatEvent } from "./events"
 
-interface Link {
+export interface Link {
   value: {
     event: CombatEvent
     time: number
   }
   next: Link | null
   prev: Link | null
+  _removed?: boolean
 }
 
 // poor man sorted linked list
@@ -20,7 +21,7 @@ export class ScheduledEvents {
       const newLink: Link = { value: obj, next: null, prev: null }
       this.headLink = newLink
       this.tailLink = newLink
-      return
+      return newLink
     }
     let current = this.tailLink
     while (true) {
@@ -30,7 +31,7 @@ export class ScheduledEvents {
           const newLink: Link = { value: obj, next: current, prev: null }
           current.prev = newLink
           this.headLink = newLink
-          return
+          return newLink
         }
         current = current.prev
       } else {
@@ -40,14 +41,14 @@ export class ScheduledEvents {
           const newLink: Link = { value: obj, next: null, prev: current }
           current.next = newLink
           this.tailLink = newLink
-          return
+          return newLink
         } else {
           // insert in middle
           const newLink: Link = { value: obj, next: current.next, prev: current }
           const oldNext = current.next
           oldNext.prev = newLink
           current.next = newLink
-          return
+          return newLink
         }
       }
     }
@@ -62,10 +63,33 @@ export class ScheduledEvents {
       } else {
         this.tailLink = null
       }
+      out.next = null
+      out.prev = null
+      out._removed = true
       return out.value
     } else {
       return null
     }
+  }
+
+  removeByLink(link: Link) {
+    if (link._removed) return
+    const { next, prev } = link
+    if (prev) {
+      prev.next = next || null
+      if (!prev.next) {
+        this.tailLink = prev
+      }
+    }
+    if (next) {
+      next.prev = prev || null
+      if (!next.prev) {
+        this.headLink = next
+      }
+    }
+    link.next = null
+    link.prev = null
+    link._removed = true
   }
 
   all() {
@@ -74,7 +98,6 @@ export class ScheduledEvents {
     let current = this.headLink
     while (current) {
       if (prev && prev.value.time > current.value.time) {
-        console.log({ prev, current })
         throw Error("Col not sorted")
       }
       out.push(current.value)
@@ -90,7 +113,6 @@ export class ScheduledEvents {
     let current = this.tailLink
     while (current) {
       if (prev && prev.value.time < current.value.time) {
-        console.log({ prev, current })
         throw Error("Col not sorted")
       }
       out.push(current.value)

@@ -6,11 +6,6 @@ export type UnitState =
   | { type: "casting"; spell: Spells; start: number; end: number }
   | { type: "gcd"; start: number; end: number }
 
-export class CombatState {
-  auras = new Map<any, Aura>()
-  state: UnitState = { type: "idle" }
-}
-
 export interface StatRatingsIn {
   haste: number
   crit: number
@@ -53,8 +48,8 @@ export class Player {
   auras: Aura[] = []
   protected recharges = new Map<Spells, number>()
 
-  hasAura(aura: Auras, opts: { caster?: string } = {}) {
-    const found = this.auras.some((x) => {
+  getAura(aura: Auras, opts: { caster?: string } = {}) {
+    const found = this.auras.find((x) => {
       const match = x.id === aura
       const casterMatch = opts.caster ? x.caster === opts.caster : true
       return match && casterMatch
@@ -80,9 +75,18 @@ export class Player {
 
 export class Enemy {
   id: string
-  combatState = new CombatState()
   auras: Aura[] = []
+
   constructor(args: { id: string }) {
     this.id = args.id
+  }
+
+  getAura(aura: Auras, opts: { caster?: string } = {}) {
+    const found = this.auras.find((x) => {
+      const match = x.id === aura
+      const casterMatch = opts.caster ? x.caster === opts.caster : true
+      return match && casterMatch
+    })
+    return found
   }
 }

@@ -1,6 +1,6 @@
 import { EncounterState } from "."
 import { Auras } from "./auras"
-import { CombatEvent } from "./events"
+import { CombatEvent, PickFromUn } from "./events"
 import { Player, StatRatingsIn } from "./player"
 
 export enum Spells {
@@ -16,6 +16,7 @@ export enum Spells {
   Atonement = "atonement-heal",
   Penance = "penance",
   Schism = "schism",
+  Evangelism = "evangelism",
 }
 
 export enum Targetting {
@@ -115,7 +116,7 @@ const Blast: Spell = {
   cast: 0,
   travelTime: 0.3,
   allowed(player) {
-    return player.hasAura(Auras.Boon)
+    return Boolean(player.getAura(Auras.Boon))
   },
   getDamage({ intellect }) {
     return 1.79 * intellect
@@ -132,7 +133,7 @@ const Nova: Spell = {
   cast: 0,
   gcd: 0.75,
   allowed(player) {
-    return player.hasAura(Auras.Boon)
+    return Boolean(player.getAura(Auras.Boon))
   },
   getDamage({ intellect }) {
     return 0.74 * intellect
@@ -154,6 +155,38 @@ const Eruption: Spell = {
   },
 }
 
+const Schism: Spell = {
+  id: Spells.Schism,
+  targetting: Targetting.Enemy,
+  applyAura: Auras.Schism,
+  cast: 1.5,
+  getDamage({ intellect }) {
+    return 1.5 * intellect
+  },
+}
+
+const Evangelism: Spell = {
+  id: Spells.Evangelism,
+  targetting: Targetting.None,
+  cast: 0,
+  onEffect(event, es, caster) {
+    for (const unit of es.friendlyUnitsIdx.values()) {
+      const atonement = unit.getAura(Auras.Atonement)
+      if (!atonement) continue
+      const expirationEvent = atonement.links.find(
+        (x) => !x._removed && x.value.event.type === "aura_remove"
+      )
+      if (!expirationEvent) continue
+      atonement.expiredAt += 6
+      es.scheduledEvents.removeByLink(expirationEvent)
+      es.scheduledEvents.push({
+        event: { ...expirationEvent.value.event },
+        time: expirationEvent.value.time + 6,
+      })
+    }
+  },
+}
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
@@ -165,4 +198,6 @@ export const spells: Record<string, Spell> = {
   [Spells.AscendedBlast]: Blast,
   [Spells.AscendedEruption]: Eruption,
   [Spells.AscendedNova]: Nova,
+  [Spells.Schism]: Schism,
+  [Spells.Evangelism]: Evangelism,
 }
