@@ -14,9 +14,12 @@ export enum Spells {
   AscendedEruption = "ascendederuption",
   Pain = "pain",
   Atonement = "atonement-heal",
-  Penance = "penance",
+  PenanceFriendly = "penance-friendly",
+  PenanceEnemy = "penance-enemy",
   Schism = "schism",
   Evangelism = "evangelism",
+  SpiritShellHeal = "spirit-shell",
+  SpiritShellActivate = "spirit-shell-activate",
 }
 
 export enum Targetting {
@@ -29,6 +32,9 @@ export enum Targetting {
 export interface Spell {
   id: Spells
   cast: number
+  channel?: {
+    ticks: number
+  }
   gcd?: number
   cooldown?: number
   targetting: Targetting
@@ -187,6 +193,42 @@ const Evangelism: Spell = {
   },
 }
 
+const SpiritShellActivate: Spell = {
+  id: Spells.SpiritShellActivate,
+  targetting: Targetting.Self,
+  cast: 0,
+  applyAura: Auras.SpiritShellModifier,
+}
+
+const PenanceFriendly: Spell = {
+  id: Spells.PenanceFriendly,
+  targetting: Targetting.Friendly,
+  cast: 2,
+  channel: {
+    ticks: 3,
+  },
+  travelTime: 0.4,
+  getHealing({ intellect }) {
+    // per tick
+    return 1.25 * intellect
+  },
+  cooldown: 9,
+}
+
+const PenanceEnemy: Spell = {
+  id: Spells.PenanceEnemy,
+  targetting: Targetting.Enemy,
+  cast: 2,
+  channel: {
+    ticks: 3,
+  },
+  travelTime: 0.4,
+  getDamage({ intellect }) {
+    return 0.4 * intellect
+  },
+  cooldown: 9,
+}
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
@@ -200,4 +242,7 @@ export const spells: Record<string, Spell> = {
   [Spells.AscendedNova]: Nova,
   [Spells.Schism]: Schism,
   [Spells.Evangelism]: Evangelism,
+  [Spells.SpiritShellActivate]: SpiritShellActivate,
+  [Spells.PenanceFriendly]: PenanceFriendly,
+  [Spells.PenanceEnemy]: PenanceEnemy,
 }

@@ -1,5 +1,5 @@
 import { EventLog } from "./EventLog"
-import { CombatEvent, handlers } from "./events"
+import { CombatEvent, eventEffects } from "./events"
 import { Enemy, Player } from "./player"
 import { ScheduledEvents } from "./ScheduledEvents"
 import { Spell, spells, Spells, Targetting } from "./spells"
@@ -91,16 +91,19 @@ export class EncounterState {
     }
     let damageTime = this.time + (spellInfo.travelTime || 0)
     const currentTargets = this.getSpellTarget(spellInfo, caster.id).map((t) => t!.id)
+    const computedCast = spellInfo.cast / (1 + caster.stats.getHastePct())
     if (spellInfo.cast) {
-      const computedCast = spellInfo.cast / (1 + caster.stats.getHastePct())
       const castEnd = this.time + computedCast
       damageTime = castEnd + (spellInfo.travelTime || 0)
       const currentTarget = currentTargets[0]
+      const { startEvent, endEvent } = spellInfo.channel
+        ? { startEvent: "spell_channel_start", endEvent: "spell_channel_finish" }
+        : { startEvent: "spell_cast_start", endEvent: "spell_cast_end" }
       out.scheduledEvents.push({
         time: this.time,
         event: {
           id: this.createEventId(),
-          type: "spell_cast_start",
+          type: startEvent as any,
           source: caster.id,
           target: currentTarget,
           spell: spellInfo.id,
@@ -111,7 +114,7 @@ export class EncounterState {
         time: castEnd,
         event: {
           id: this.createEventId(),
-          type: "spell_cast_success",
+          type: endEvent as any,
           source: caster.id,
           spell: spellInfo.id,
           target: currentTarget,
@@ -145,35 +148,47 @@ export class EncounterState {
         },
       })
     }
-    if (spellInfo.getDamage) {
-      currentTargets.forEach((currentTarget) => {
-        out.scheduledEvents.push({
-          time: damageTime,
-          event: {
-            id: this.createEventId(),
-            type: "dmg",
-            source: caster.id,
-            spell: spellInfo.id,
-            target: currentTarget,
-            value: null,
-            calcValue: true,
-          },
-        })
-      })
-    }
-    if (spellInfo.getHealing) {
+    if (spellInfo.getDamage || spellInfo.getHealing) {
       for (const currentTarget of currentTargets) {
-        out.scheduledEvents.push({
-          time: damageTime,
-          event: {
-            id: this.createEventId(),
-            type: "heal",
-            source: caster.id,
-            spell: spellInfo.id,
-            target: currentTarget,
-            value: null,
-            calcValue: true,
-          },
+        let ticksInfo: number[]
+        if (!spellInfo.channel) {
+          ticksInfo = [damageTime]
+        } else {
+          const nticks = spellInfo.channel.ticks
+          const tickTime = computedCast / (nticks - 1)
+          ticksInfo = Array.from({ length: nticks }, (_, index) => {
+            return this.time + index * tickTime + (spellInfo.travelTime || 0)
+          })
+        }
+        ticksInfo.forEach((eachTick) => {
+          if (spellInfo.getDamage) {
+            out.scheduledEvents.push({
+              time: eachTick,
+              event: {
+                id: this.createEventId(),
+                type: "dmg",
+                source: caster.id,
+                spell: spellInfo.id,
+                target: currentTarget,
+                value: null,
+                calcValue: true,
+              },
+            })
+          }
+          if (spellInfo.getHealing) {
+            out.scheduledEvents.push({
+              time: eachTick,
+              event: {
+                id: this.createEventId(),
+                type: "heal",
+                source: caster.id,
+                spell: spellInfo.id,
+                target: currentTarget,
+                value: null,
+                calcValue: true,
+              },
+            })
+          }
         })
       }
     }
@@ -216,11 +231,11 @@ export class EncounterState {
       if (eventType === "_queuenext") {
         this.pushNextSpell()
       } else {
-        const eventHandler = handlers[eventType]
-        if (!eventHandler) {
+        const eventEffect = eventEffects[eventType]
+        if (!eventEffect) {
           throw Error(`No event handler for ${eventType}`)
         }
-        eventHandler(currentEvent.event, this)
+        eventEffect(currentEvent.event, this)
         this.eventLog.push(currentEvent)
       }
 
@@ -238,7 +253,7 @@ function getHealing(spells: Spells[], player: Player) {
 
 export function sample() {
   // const spells = [...Array(8).fill(Spells.Shield), Spells.Radiance, Spells.Smite, Spells.Smite]
-  const spells = [Spells.Shield, Spells.Radiance, Spells.Evangelism]
+  const spells = [Spells.Shield, Spells.PenanceEnemy]
   const player = new Player({ id: "0" })
   return getHealing(spells, player)
 }

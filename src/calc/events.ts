@@ -41,6 +41,21 @@ export type CombatEvent =
     }
   | {
       id: number
+      type: "spell_channel_start"
+      target: string | null
+      spell: Spells
+      source: string
+      castEnd: number
+    }
+  | {
+      id: number
+      type: "spell_channel_finish"
+      target: string | null
+      spell: Spells
+      source: string
+    }
+  | {
+      id: number
       type: "aura_apply"
       aura: Auras
       source: string
@@ -64,7 +79,7 @@ export interface EventTime {
 
 export type PickFromUn<Un, T extends string> = Un extends { type: T } ? Un : never
 
-export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
+export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> = {
   spell_cast_start: (
     event: PickFromUn<CombatEvent, "spell_cast_start">,
     encounter: EncounterState
@@ -74,6 +89,12 @@ export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
     if (!caster.canCastSpell({ time: encounter.time, spell: event.spell })) {
       throw Error(`Spell ${event.spell} is on recharge.`)
     }
+  },
+  spell_channel_start: (
+    event: PickFromUn<CombatEvent, "spell_channel_start">,
+    encounter: EncounterState
+  ) => {
+    return eventEffects.spell_cast_start(event, encounter)
   },
   spell_cast_success: (
     event: PickFromUn<CombatEvent, "spell_cast_success">,
@@ -100,6 +121,12 @@ export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
       spellInfo.onEffect(event, encounter, caster)
     }
   },
+  spell_channel_finish: (
+    event: PickFromUn<CombatEvent, "spell_channel_finish">,
+    encounter: EncounterState
+  ) => {
+    return eventEffects.spell_cast_success(event, encounter)
+  },
   dmg: (event: PickFromUn<CombatEvent, "dmg">, encounter: EncounterState) => {
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
@@ -117,21 +144,25 @@ export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
       }
     }
     // atonement
+    const hasShell = Boolean(caster.getAura(Auras.SpiritShellModifier))
     for (const unit of encounter.friendlyUnitsIdx.values()) {
       const hasAtonement = unit.auras.some(
         (aura) => aura.id === Auras.Atonement && aura.caster === caster.id
       )
       if (hasAtonement) {
         const healValue = (event.value || 0) * caster.stats.getMasteryPct()
+        const [spell, heal2] = hasShell
+          ? [Spells.SpiritShellHeal, healValue * 0.8]
+          : [Spells.Atonement, healValue]
         encounter.scheduledEvents.push({
           time: encounter.time,
           event: {
             type: "heal",
             id: encounter.createEventId(),
             source: caster.id,
-            spell: Spells.Atonement,
+            spell,
             target: unit.id,
-            value: healValue,
+            value: heal2,
             sourceEvent: event.id,
           },
         })
@@ -148,6 +179,13 @@ export const handlers: Record<string, (ev: any, en: EncounterState) => any> = {
         const value = spellInfo.getHealing(caster.stats.getStatRatings())
         event.value = value
       }
+    }
+    const applyShell =
+      [Spells.PenanceFriendly, Spells.Radiance].includes(event.spell) &&
+      Boolean(caster.getAura(Auras.SpiritShellModifier))
+    if (applyShell && event.value) {
+      event.value = event.value * 0.8
+      event.spell = Spells.SpiritShellHeal
     }
   },
   aura_apply: (event: PickFromUn<CombatEvent, "aura_apply">, encounter: EncounterState) => {

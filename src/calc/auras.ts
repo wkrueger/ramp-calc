@@ -8,6 +8,7 @@ export enum Auras {
   Schism = "schism-aura",
   Pain = "pain-aura",
   Boon = "boon-aura",
+  SpiritShellModifier = "shell-modifier",
 }
 
 export interface Aura {
@@ -44,6 +45,11 @@ const Pain: AuraInfo = {
 const Atonement: AuraInfo = {
   id: Auras.Atonement,
   duration: 12,
+}
+
+const SpiritShellModifier: AuraInfo = {
+  id: Auras.SpiritShellModifier,
+  duration: 10,
 }
 
 const Boon: AuraInfo = {
@@ -83,4 +89,5 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Atonement]: Atonement,
   [Auras.Boon]: Boon,
   [Auras.Schism]: Schism,
+  [Auras.SpiritShellModifier]: SpiritShellModifier,
 }
