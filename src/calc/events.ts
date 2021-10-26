@@ -176,7 +176,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       const spellInfo = spells[event.spell]
       if (!spellInfo) throw Error("Spell not found.")
       if (spellInfo.getHealing) {
-        const value = spellInfo.getHealing(caster.stats.getStatRatings())
+        const value = spellInfo.getHealing(caster.stats.getStatRatings(), caster)
         event.value = value
       }
     }

@@ -20,6 +20,8 @@ export enum Spells {
   Evangelism = "evangelism",
   SpiritShellHeal = "spirit-shell",
   SpiritShellActivate = "spirit-shell-activate",
+  Rapture = "rapture",
+  ShadowMend = "shadow-mend",
 }
 
 export enum Targetting {
@@ -46,7 +48,7 @@ export interface Spell {
   travelTime?: number
   passive?: boolean
   getDamage?: (stats: StatRatingsIn, player: Player) => number
-  getHealing?: (stats: StatRatingsIn) => number
+  getHealing?: (stats: StatRatingsIn, caster: Player) => number
   onEffect?: (event: CombatEvent, es: EncounterState, caster: Player) => void
   allowed?: (player: Player) => boolean
 }
@@ -73,8 +75,19 @@ const Shield: Spell = {
   targetting: Targetting.Friendly,
   applyAura: Auras.Atonement,
   cast: 0,
+  getHealing({ intellect }, caster) {
+    const raptureMod = caster.getAura(Auras.Rapture) ? 2 : 1
+    return 1.65 * intellect * raptureMod
+  },
+}
+
+const ShadowMend: Spell = {
+  id: Spells.ShadowMend,
+  targetting: Targetting.Friendly,
+  applyAura: Auras.Atonement,
+  cast: 1.5,
   getHealing({ intellect }) {
-    return 1.65 * intellect
+    return 3.2 * intellect
   },
 }
 
@@ -229,6 +242,17 @@ const PenanceEnemy: Spell = {
   cooldown: 9,
 }
 
+const Rapture: Spell = {
+  id: Spells.Rapture,
+  targetting: Targetting.Self,
+  cast: 0,
+  applyAura: Auras.Rapture,
+  cooldown: 90,
+  onEffect(ev, es, caster) {
+    es.createEventsForSpell(Spells.Shield, caster.id, false)
+  },
+}
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
@@ -245,4 +269,6 @@ export const spells: Record<string, Spell> = {
   [Spells.SpiritShellActivate]: SpiritShellActivate,
   [Spells.PenanceFriendly]: PenanceFriendly,
   [Spells.PenanceEnemy]: PenanceEnemy,
+  [Spells.Rapture]: Rapture,
+  [Spells.ShadowMend]: ShadowMend,
 }

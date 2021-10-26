@@ -73,7 +73,7 @@ export class EncounterState {
     return []
   }
 
-  createEventsForSpell(spellId: Spells, source: string) {
+  createEventsForSpell(spellId: Spells, source: string, queueNext = true) {
     const out = {
       // eventLog: [] as EventTime[],
       scheduledEvents: [] as { event: CombatEvent; time: number }[],
@@ -120,13 +120,15 @@ export class EncounterState {
           target: currentTarget,
         },
       })
-      out.scheduledEvents.push({
-        time: castEnd,
-        event: {
-          id: this.createEventId(),
-          type: "_queuenext",
-        },
-      })
+      if (queueNext) {
+        out.scheduledEvents.push({
+          time: castEnd,
+          event: {
+            id: this.createEventId(),
+            type: "_queuenext",
+          },
+        })
+      }
     }
     if (!spellInfo.cast) {
       out.scheduledEvents.push({
@@ -140,13 +142,15 @@ export class EncounterState {
         },
       })
       const computedGCD = (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
-      out.scheduledEvents.push({
-        time: this.time + computedGCD,
-        event: {
-          id: this.createEventId(),
-          type: "_queuenext",
-        },
-      })
+      if (queueNext) {
+        out.scheduledEvents.push({
+          time: this.time + computedGCD,
+          event: {
+            id: this.createEventId(),
+            type: "_queuenext",
+          },
+        })
+      }
     }
     if (spellInfo.getDamage || spellInfo.getHealing) {
       for (const currentTarget of currentTargets) {
