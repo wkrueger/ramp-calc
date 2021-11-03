@@ -20,8 +20,7 @@ export function TalentBox({
   }, [value])
 
   const handleChange = useCallback(
-    (code: string) => {
-      console.log("change", code)
+    (code: string) => () => {
       const byRow = _keyBy(talentObjs, "row")
       const toSetObj = talentsIdx[code]!
       byRow[toSetObj.row] = toSetObj
@@ -53,7 +52,7 @@ export function TalentBox({
                   label={talent.label}
                   isSelected={selected}
                   isDisabled={!selected}
-                  onClick={() => handleChange(talent.code)}
+                  onClick={handleChange(talent.code)}
                 />
               )
             })}

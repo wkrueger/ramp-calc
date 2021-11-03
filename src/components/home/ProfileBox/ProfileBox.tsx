@@ -27,6 +27,7 @@ import { covenants } from "../data/covenants"
 import { talentsIdx } from "../data/talents"
 import { Profile, STATS_INFO } from "../Home"
 import { WowIcon } from "../WowIcon"
+import { ConduitBox } from "./ConduitBox"
 import { CovenantBox } from "./CovenantBox"
 import { TalentBox } from "./TalentBox"
 
@@ -53,6 +54,7 @@ export function ProfileBox({
 }) {
   const [isCovenantPopupOpen, setCovenantPopupOpen] = usePopupState()
   const [isTalentPopupOpen, setTalentPopupOpen] = usePopupState()
+  const [isConduitPopupOpen, setConduitPopupOpen] = usePopupState()
 
   const setProfileName = useCallback(
     (nextName: string) => {
@@ -66,7 +68,6 @@ export function ProfileBox({
   const genericChangeProfile = useCallback(
     (ev) => {
       const { name, value } = ev.target
-      console.log("gen change", { name, value })
       setProfile((prev) => {
         return immer(prev, (draft) => {
           _set(draft, name, value)
@@ -184,7 +185,7 @@ export function ProfileBox({
             <PopoverArrow />
             <PopoverBody>
               <TalentBox
-                className="talent-dialog"
+                className="popover-dialog"
                 value={profile.talents}
                 onChange={genericChangeProfile}
               />
@@ -192,17 +193,44 @@ export function ProfileBox({
           </PopoverContent>
         </Popover>
 
-        <Stack className="box clickable" alignItems="flex-start">
-          <Heading size="sm" as="h3">
-            Conduits
-          </Heading>
-          {profile.conduits.map((conduitCode) => {
-            const conduitObj = conduitsIdx[conduitCode]!
-            return (
-              <WowIcon iconName={conduitObj.icon} label={conduitObj.label} key={conduitObj.code} />
-            )
-          })}
-        </Stack>
+        <Popover
+          isOpen={isConduitPopupOpen}
+          onClose={() => setConduitPopupOpen(false)}
+          isLazy
+          placement="right-start"
+        >
+          <PopoverTrigger>
+            <Stack
+              className="box clickable"
+              alignItems="flex-start"
+              onClick={() => setConduitPopupOpen(true)}
+            >
+              <Heading size="sm" as="h3">
+                Conduits
+              </Heading>
+              {profile.conduits.map((conduitCode) => {
+                const conduitObj = conduitsIdx[conduitCode]!
+                return (
+                  <WowIcon
+                    iconName={conduitObj.icon}
+                    label={conduitObj.label}
+                    key={conduitObj.code}
+                  />
+                )
+              })}
+            </Stack>
+          </PopoverTrigger>
+          <PopoverContent width="unset">
+            <PopoverArrow />
+            <PopoverBody>
+              <ConduitBox
+                className="popover-dialog"
+                value={profile.conduits}
+                onChange={genericChangeProfile}
+              />
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
       </Flex>
     </Flex>
   )
