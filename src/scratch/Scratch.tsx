@@ -1,8 +1,8 @@
 import type { NextPage } from "next"
 import { useCallback, useEffect, useState } from "react"
-import { sample } from "../src/calc"
+import { sample } from "../calc"
 
-const Home: NextPage = () => {
+const Scratch: NextPage = () => {
   const [state, setState] = useState(null as any)
   const [err, setErr] = useState(null as any)
   const run = useCallback(() => {
@@ -34,4 +34,4 @@ const Home: NextPage = () => {
   )
 }
 
-export default Home
+export default Scratch
