@@ -9,10 +9,11 @@ export enum Spells {
   Radiance = "radiance",
   Solace = "solace",
   Boon = "boon",
-  AscendedBlast = "ascendedblast",
-  AscendedNova = "ascendednova",
+  AscendedBlast = "ascended-blast",
+  AscendedNova = "ascended-nova",
   AscendedEruption = "ascendederuption",
   Pain = "pain",
+  PurgeTheWicked = "purge-the-wicked",
   Atonement = "atonement-heal",
   PenanceFriendly = "penance-friendly",
   PenanceEnemy = "penance-enemy",
@@ -33,7 +34,9 @@ export enum Targetting {
 
 export interface Spell {
   id: Spells
+  label: string
   cast: number
+  icon: string
   channel?: {
     ticks: number
   }
@@ -55,6 +58,8 @@ export interface Spell {
 
 const Smite: Spell = {
   id: Spells.Smite,
+  label: "Smite",
+  icon: "spell_holy_holysmite",
   targetting: Targetting.Enemy,
   cast: 1.5,
   getDamage: ({ intellect }) => intellect * 0.47,
@@ -62,6 +67,8 @@ const Smite: Spell = {
 
 const Pain: Spell = {
   id: Spells.Pain,
+  label: "Shadow Word: Pain",
+  icon: "spell_shadow_shadowwordpain",
   targetting: Targetting.Enemy,
   cast: 0,
   getDamage(stats) {
@@ -70,8 +77,22 @@ const Pain: Spell = {
   applyAura: Auras.Pain,
 }
 
+const PurgeTheWicked: Spell = {
+  id: Spells.PurgeTheWicked,
+  label: "Purge the Wicked",
+  icon: "ability_mage_firestarter",
+  targetting: Targetting.Enemy,
+  cast: 0,
+  getDamage(stats) {
+    return 0.223 * stats.intellect
+  },
+  applyAura: Auras.PurgeTheWicked,
+}
+
 const Shield: Spell = {
   id: Spells.Shield,
+  label: "Power Word: Shield",
+  icon: "spell_holy_powerwordshield",
   targetting: Targetting.Friendly,
   applyAura: Auras.Atonement,
   cast: 0,
@@ -83,6 +104,8 @@ const Shield: Spell = {
 
 const ShadowMend: Spell = {
   id: Spells.ShadowMend,
+  label: "Shadow Mend",
+  icon: "spell_shadow_shadowmend",
   targetting: Targetting.Friendly,
   applyAura: Auras.Atonement,
   cast: 1.5,
@@ -93,13 +116,17 @@ const ShadowMend: Spell = {
 
 const Atonement: Spell = {
   id: Spells.Atonement,
+  label: "Atonement",
+  passive: true,
+  icon: "ability_priest_atonement",
   targetting: Targetting.None,
   cast: 0,
-  passive: true,
 }
 
 const Solace: Spell = {
   id: Spells.Solace,
+  label: "Solace",
+  icon: "ability_priest_flashoflight",
   targetting: Targetting.Enemy,
   cast: 0,
   travelTime: 0.4,
@@ -110,6 +137,8 @@ const Solace: Spell = {
 
 const Radiance: Spell = {
   id: Spells.Radiance,
+  label: "Power Word: Radiance",
+  icon: "spell_priest_power-word",
   targetting: Targetting.Friendly,
   targetCount: 6,
   cast: 2,
@@ -124,6 +153,8 @@ const Radiance: Spell = {
 
 const Boon: Spell = {
   id: Spells.Boon,
+  label: "Boon of The Ascended",
+  icon: "ability_bastion_priest",
   targetting: Targetting.Self,
   cast: 1.5,
   applyAura: Auras.Boon,
@@ -131,6 +162,8 @@ const Boon: Spell = {
 
 const Blast: Spell = {
   id: Spells.AscendedBlast,
+  label: "Ascended Blast",
+  icon: "spell_animabastion_missile",
   targetting: Targetting.Enemy,
   cast: 0,
   travelTime: 0.3,
@@ -148,6 +181,8 @@ const Blast: Spell = {
 
 const Nova: Spell = {
   id: Spells.AscendedNova,
+  label: "Ascended Nova",
+  icon: "spell_animabastion_nova",
   targetting: Targetting.Enemy,
   cast: 0,
   gcd: 0.75,
@@ -165,6 +200,8 @@ const Nova: Spell = {
 
 const Eruption: Spell = {
   id: Spells.AscendedEruption,
+  label: "Ascended Eruption",
+  icon: "ability_bastion_priest",
   targetting: Targetting.Enemy,
   cast: 0,
   passive: true,
@@ -176,6 +213,8 @@ const Eruption: Spell = {
 
 const Schism: Spell = {
   id: Spells.Schism,
+  label: "Schism",
+  icon: "spell_warlock_focusshadow",
   targetting: Targetting.Enemy,
   applyAura: Auras.Schism,
   cast: 1.5,
@@ -186,6 +225,8 @@ const Schism: Spell = {
 
 const Evangelism: Spell = {
   id: Spells.Evangelism,
+  label: "Evangelism",
+  icon: "spell_holy_divineillumination",
   targetting: Targetting.None,
   cast: 0,
   onEffect(event, es, caster) {
@@ -208,6 +249,8 @@ const Evangelism: Spell = {
 
 const SpiritShellActivate: Spell = {
   id: Spells.SpiritShellActivate,
+  label: "Spirit Shell",
+  icon: "ability_shaman_astralshift",
   targetting: Targetting.Self,
   cast: 0,
   applyAura: Auras.SpiritShellModifier,
@@ -215,6 +258,8 @@ const SpiritShellActivate: Spell = {
 
 const PenanceFriendly: Spell = {
   id: Spells.PenanceFriendly,
+  label: "Penance (target friend)",
+  icon: "spell_holy_penance",
   targetting: Targetting.Friendly,
   cast: 2,
   channel: {
@@ -230,6 +275,8 @@ const PenanceFriendly: Spell = {
 
 const PenanceEnemy: Spell = {
   id: Spells.PenanceEnemy,
+  label: "Penance (offensive)",
+  icon: "spell_holy_penance",
   targetting: Targetting.Enemy,
   cast: 2,
   channel: {
@@ -244,6 +291,8 @@ const PenanceEnemy: Spell = {
 
 const Rapture: Spell = {
   id: Spells.Rapture,
+  label: "Rapture",
+  icon: "spell_holy_rapture",
   targetting: Targetting.Self,
   cast: 0,
   applyAura: Auras.Rapture,
@@ -256,6 +305,7 @@ const Rapture: Spell = {
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
+  [Spells.PurgeTheWicked]: PurgeTheWicked,
   [Spells.Shield]: Shield,
   [Spells.Atonement]: Atonement,
   [Spells.Solace]: Solace,

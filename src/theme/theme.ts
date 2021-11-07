@@ -1,4 +1,4 @@
-import { extendTheme, ThemeConfig } from "@chakra-ui/react"
+import { extendTheme, ThemeConfig } from "@chakra-ui/react";
 
 export const theme = extendTheme({
   styles: {
@@ -20,4 +20,4 @@ export const theme = extendTheme({
     initialColorMode: "dark",
     useSystemColorMode: true,
   } as ThemeConfig,
-})
+});

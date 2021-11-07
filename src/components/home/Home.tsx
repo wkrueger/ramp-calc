@@ -3,6 +3,7 @@ import React, { memo, useCallback, useState } from "react"
 import immer from "immer"
 import { WithIndexSetter } from "../../util/WIthIndexSetter"
 import { ProfileBox } from "./ProfileBox/ProfileBox"
+import { initialProfile, Profile } from "./data/profile"
 
 export const STATS_INFO = [
   { label: "Intellect", code: "intellect" },
@@ -13,23 +14,6 @@ export const STATS_INFO = [
 ]
 
 const ProfileMemo = memo(ProfileBox)
-
-const initialProfile = {
-  id: 1,
-  profileName: "Profile Name",
-  stats: {
-    intellect: 1500,
-    haste: 500,
-    mastery: 500,
-    critical: 500,
-    versatility: 500,
-  } as Record<string, any>,
-  covenant: "kyrian",
-  talents: ["schism", "solace", "sins-of-the-many", "purge-the-wicked", "evangelism"],
-  conduits: ["courageous-ascension", "exaltation", "rabid-shadows"],
-}
-
-export type Profile = typeof initialProfile
 
 export function Home() {
   const [root, setRoot] = useState({

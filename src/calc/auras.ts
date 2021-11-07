@@ -7,6 +7,7 @@ export enum Auras {
   Atonement = "atonement",
   Schism = "schism-aura",
   Pain = "pain-aura",
+  PurgeTheWicked = "purge-the-wicked-aura",
   Boon = "boon-aura",
   SpiritShellModifier = "shell-modifier",
   Rapture = "rapture-aura",
@@ -39,6 +40,17 @@ const Pain: AuraInfo = {
     interval: 2,
     getDoTDamage(stats) {
       return 0.57528 * stats.intellect
+    },
+  },
+}
+
+const PurgeTheWicked: AuraInfo = {
+  id: Auras.PurgeTheWicked,
+  duration: 20,
+  dot: {
+    interval: 2,
+    getDoTDamage(stats) {
+      return 1.24 * stats.intellect
     },
   },
 }
@@ -92,6 +104,7 @@ const Rapture: AuraInfo = {
 
 export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Pain]: Pain,
+  [Auras.PurgeTheWicked]: PurgeTheWicked,
   [Auras.Atonement]: Atonement,
   [Auras.Boon]: Boon,
   [Auras.Schism]: Schism,
