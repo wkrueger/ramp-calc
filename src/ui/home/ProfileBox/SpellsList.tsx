@@ -13,9 +13,9 @@ import {
 import clsx from "clsx";
 import React, { useCallback, useMemo, useState } from "react";
 import { Spell, spells } from "../../../calc/spells";
-import { presets, presetsIdx } from "../data/presets";
-import { Profile } from "../data/profile";
-import { Affix, spellsWithAffix, WowIcon } from "../WowIcon";
+import { presets, presetsIdx } from "../../data/presets";
+import { Profile } from "../../data/profile";
+import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon";
 import { SpellsBox } from "./SpellsBox";
 
 const containerStyles: CSSObject = {

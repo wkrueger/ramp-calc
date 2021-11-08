@@ -1,9 +1,16 @@
-import { Badge, Center, Container, Divider, Heading, Stack } from "@chakra-ui/react"
-import React, { memo, useCallback, useState } from "react"
-import immer from "immer"
-import { WithIndexSetter } from "../../util/WIthIndexSetter"
-import { ProfileBox } from "./ProfileBox/ProfileBox"
-import { initialProfile, Profile } from "./data/profile"
+import {
+  Badge,
+  Center,
+  Container,
+  Divider,
+  Heading,
+  Stack,
+} from "@chakra-ui/react";
+import React, { memo, useCallback, useState } from "react";
+import immer from "immer";
+import { WithIndexSetter } from "../common/WIthIndexSetter";
+import { ProfileBox } from "./ProfileBox/ProfileBox";
+import { initialProfile, Profile } from "../data/profile";
 
 export const STATS_INFO = [
   { label: "Intellect", code: "intellect" },
@@ -11,24 +18,27 @@ export const STATS_INFO = [
   { label: "Mastery", code: "mastery" },
   { label: "Critical", code: "critical" },
   { label: "Versatility", code: "versatility" },
-]
+];
 
-const ProfileMemo = memo(ProfileBox)
+const ProfileMemo = memo(ProfileBox);
 
 export function Home() {
   const [root, setRoot] = useState({
     idSeed: 0,
     profiles: [initialProfile],
-  })
-  const { profiles } = root
+  });
+  const { profiles } = root;
 
-  const setProfileAtIndex = useCallback((updatedProfile: Profile, index: number) => {
-    setRoot((prevRoot) => {
-      return immer(prevRoot, (draft) => {
-        draft.profiles[index] = updatedProfile
-      })
-    })
-  }, [])
+  const setProfileAtIndex = useCallback(
+    (updatedProfile: Profile, index: number) => {
+      setRoot(prevRoot => {
+        return immer(prevRoot, draft => {
+          draft.profiles[index] = updatedProfile;
+        });
+      });
+    },
+    []
+  );
 
   return (
     <Container py="4" maxWidth="container.lg">
@@ -51,9 +61,9 @@ export function Home() {
               setterKey="setProfile"
               valueKey="profile"
             />
-          )
+          );
         })}
       </Stack>
     </Container>
-  )
+  );
 }

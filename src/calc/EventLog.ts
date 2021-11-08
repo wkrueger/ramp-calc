@@ -6,9 +6,9 @@ export class EventLog {
   log: EventTime[] = []
   listeners: EventLogListener[] = []
 
-  addListener(listener: EventLogListener) {
-    this.listeners.push(listener)
-  }
+  // addListener(listener: EventLogListener) {
+  //   this.listeners.push(listener)
+  // }
 
   push(item: EventTime) {
     this.log.push(item)

@@ -37,7 +37,7 @@ export class EncounterState {
   on(eventType: string, handler: any) {}
 
   queueSequence(source: string, sequence: Spells[]) {
-    sequence.forEach((spell) => {
+    sequence.forEach(spell => {
       this.spellsQueued.push({ source, spell })
     })
   }
@@ -59,7 +59,7 @@ export class EncounterState {
       for (const unit of this.friendlyUnitsIdx.values()) {
         if (applyAura) {
           const hasAura = unit.auras.some(
-            (aura) => aura.id === applyAura && aura.caster === casterId
+            aura => aura.id === applyAura && aura.caster === casterId
           )
           if (hasAura) continue
         }
@@ -90,15 +90,20 @@ export class EncounterState {
       throw Error(`Spell ${spellId} is passive and cant be invoked.`)
     }
     let damageTime = this.time + (spellInfo.travelTime || 0)
-    const currentTargets = this.getSpellTarget(spellInfo, caster.id).map((t) => t!.id)
+    const currentTargets = this.getSpellTarget(spellInfo, caster.id).map(
+      t => t!.id
+    )
     const computedCast = spellInfo.cast / (1 + caster.stats.getHastePct())
     if (spellInfo.cast) {
       const castEnd = this.time + computedCast
       damageTime = castEnd + (spellInfo.travelTime || 0)
       const currentTarget = currentTargets[0]
       const { startEvent, endEvent } = spellInfo.channel
-        ? { startEvent: "spell_channel_start", endEvent: "spell_channel_finish" }
-        : { startEvent: "spell_cast_start", endEvent: "spell_cast_end" }
+        ? {
+            startEvent: "spell_channel_start",
+            endEvent: "spell_channel_finish",
+          }
+        : { startEvent: "spell_cast_start", endEvent: "spell_cast_success" }
       out.scheduledEvents.push({
         time: this.time,
         event: {
@@ -141,7 +146,8 @@ export class EncounterState {
           spell: spellInfo.id,
         },
       })
-      const computedGCD = (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
+      const computedGCD =
+        (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
       if (queueNext) {
         out.scheduledEvents.push({
           time: this.time + computedGCD,
@@ -164,7 +170,7 @@ export class EncounterState {
             return this.time + index * tickTime + (spellInfo.travelTime || 0)
           })
         }
-        ticksInfo.forEach((eachTick) => {
+        ticksInfo.forEach(eachTick => {
           if (spellInfo.getDamage) {
             out.scheduledEvents.push({
               time: eachTick,
@@ -217,7 +223,10 @@ export class EncounterState {
   pushNextSpell() {
     const nextSpell = this.spellsQueued.shift()
     if (!nextSpell) return null
-    const { scheduledEvents } = this.createEventsForSpell(nextSpell.spell, nextSpell.source)
+    const { scheduledEvents } = this.createEventsForSpell(
+      nextSpell.spell,
+      nextSpell.source
+    )
     for (const item of scheduledEvents) {
       this.scheduledEvents.push(item)
     }
@@ -248,18 +257,21 @@ export class EncounterState {
   }
 }
 
-function getHealing(spells: Spells[], player: Player) {
+export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
+  let out = 0
+  for (const eventTime of args.log.log) {
+    const { event } = eventTime
+    if (event.type === args.type) {
+      out += event.value || 0
+    }
+  }
+  return out
+}
+
+export function getHealing(p: { spells: Spells[] }) {
   const state = new EncounterState()
-  state.queueSequence("0", spells)
+  state.queueSequence("0", p.spells)
   state.run()
-  return state
+  const healing = reduceEvents({ log: state.eventLog, type: "heal" })
+  return { healing, time: state.time, log: state.eventLog.log }
 }
-
-export function sample() {
-  // const spells = [...Array(8).fill(Spells.Shield), Spells.Radiance, Spells.Smite, Spells.Smite]
-  const spells = [Spells.Shield, Spells.PenanceEnemy]
-  const player = new Player({ id: "0" })
-  return getHealing(spells, player)
-}
-
-export {}

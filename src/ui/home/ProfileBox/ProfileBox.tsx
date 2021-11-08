@@ -16,22 +16,23 @@ import {
   Spacer,
   Stack,
   Text,
-} from "@chakra-ui/react";
-import immer from "immer";
-import _set from "lodash/set";
-import React, { useCallback, useMemo } from "react";
-import { BasicEvent } from "../../../util/event";
-import { usePopupState } from "../../../util/usePopupState";
-import { conduitsIdx } from "../data/conduits";
-import { covenants } from "../data/covenants";
-import { Profile } from "../data/profile";
-import { talentsIdx } from "../data/talents";
-import { STATS_INFO } from "../Home";
-import { WowIcon } from "../WowIcon";
-import { ConduitBox } from "./ConduitBox";
-import { CovenantBox } from "./CovenantBox";
-import { SpellsList } from "./SpellsList";
-import { TalentBox } from "./TalentBox";
+} from "@chakra-ui/react"
+import immer from "immer"
+import _set from "lodash/set"
+import React, { useCallback, useMemo } from "react"
+import { BasicEvent } from "../../common/event"
+import { usePopupState } from "../../common/usePopupState"
+import { conduitsIdx } from "../../data/conduits"
+import { covenants } from "../../data/covenants"
+import { Profile } from "../../data/profile"
+import { talentsIdx } from "../../data/talents"
+import { STATS_INFO } from "../Home"
+import { WowIcon } from "../../common/WowIcon"
+import { ConduitBox } from "./ConduitBox"
+import { CovenantBox } from "./CovenantBox"
+import { SpellsList } from "./SpellsList"
+import { TalentBox } from "./TalentBox"
+import { ResultList } from "./ResultList"
 
 const containerStyles: CSSObject = {
   ".popover-dialog": {
@@ -48,48 +49,48 @@ const containerStyles: CSSObject = {
       marginRight: 0,
     },
   },
-};
+}
 
 export function ProfileBox({
   profile,
   setProfile,
 }: {
-  profile: Profile;
-  setProfile: (cb: (s: Profile) => Profile) => void;
+  profile: Profile
+  setProfile: (cb: (s: Profile) => Profile) => void
 }) {
-  const [isCovenantPopupOpen, setCovenantPopupOpen] = usePopupState();
-  const [isTalentPopupOpen, setTalentPopupOpen] = usePopupState();
-  const [isConduitPopupOpen, setConduitPopupOpen] = usePopupState();
+  const [isCovenantPopupOpen, setCovenantPopupOpen] = usePopupState()
+  const [isTalentPopupOpen, setTalentPopupOpen] = usePopupState()
+  const [isConduitPopupOpen, setConduitPopupOpen] = usePopupState()
 
   const setProfileName = useCallback(
     (nextName: string) => {
       setProfile(profile => {
-        return { ...profile, profileName: nextName };
-      });
+        return { ...profile, profileName: nextName }
+      })
     },
     [setProfile]
-  );
+  )
 
   const genericChangeProfile = useCallback(
     ev => {
-      const { name, value } = ev.target;
+      const { name, value } = ev.target
       setProfile(prev => {
         return immer(prev, draft => {
-          _set(draft, name, value);
-        });
-      });
+          _set(draft, name, value)
+        })
+      })
     },
     [setProfile]
-  );
+  )
 
   const setAndClosePopups = useMemo(() => {
     return (setter: (s: boolean) => void) => (ev: BasicEvent) => {
-      setter(false);
-      genericChangeProfile(ev);
-    };
-  }, [genericChangeProfile]);
+      setter(false)
+      genericChangeProfile(ev)
+    }
+  }, [genericChangeProfile])
 
-  const covenantObject = covenants.find(c => c.code === profile.covenant)!;
+  const covenantObject = covenants.find(c => c.code === profile.covenant)!
 
   return (
     <Flex
@@ -134,7 +135,7 @@ export function ProfileBox({
                   />
                   <Text flexGrow={1}>{statInfo.label}</Text>
                 </HStack>
-              );
+              )
             })}
           </Stack>
         </Stack>
@@ -191,14 +192,14 @@ export function ProfileBox({
                 Talents
               </Heading>
               {profile.talents.map(talentCode => {
-                const talentObj = talentsIdx[talentCode];
+                const talentObj = talentsIdx[talentCode]
                 return (
                   <WowIcon
                     key={talentObj.code}
                     iconName={talentObj.icon}
                     label={talentObj.label}
                   />
-                );
+                )
               })}
             </Stack>
           </PopoverTrigger>
@@ -231,14 +232,14 @@ export function ProfileBox({
                 Conduits
               </Heading>
               {profile.conduits.map(conduitCode => {
-                const conduitObj = conduitsIdx[conduitCode]!;
+                const conduitObj = conduitsIdx[conduitCode]!
                 return (
                   <WowIcon
                     iconName={conduitObj.icon}
                     label={conduitObj.label}
                     key={conduitObj.code}
                   />
-                );
+                )
               })}
             </Stack>
           </PopoverTrigger>
@@ -254,11 +255,20 @@ export function ProfileBox({
           </PopoverContent>
         </Popover>
 
-        {/* spells */}
-        <Flex direction="column" flexGrow={1}>
+        <Flex
+          direction="column"
+          flexGrow={1}
+          sx={{
+            ">.box": { marginRight: 0, marginBottom: 2 },
+            ">.box:last-child": { marginBottom: 0 },
+          }}
+        >
+          {/* spells */}
           <SpellsList profile={profile} setProfile={setProfile} />
+          {/* result */}
+          <ResultList profile={profile} />
         </Flex>
       </Flex>
     </Flex>
-  );
+  )
 }

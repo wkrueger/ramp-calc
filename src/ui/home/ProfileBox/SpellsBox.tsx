@@ -1,7 +1,7 @@
 import { Heading, SimpleGrid, Stack } from "@chakra-ui/layout";
 import React from "react";
 import { Spell, spells } from "../../../calc/spells";
-import { Affix, spellsWithAffix, WowIcon } from "../WowIcon";
+import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon";
 
 const spellsList = Object.values(spells).filter(x => !x.passive);
 
