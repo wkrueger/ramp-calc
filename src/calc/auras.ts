@@ -1,17 +1,9 @@
-import { EncounterState } from "."
-import { CombatEvent, PickFromUn } from "./events"
-import { StatRatingsIn } from "./player"
-import { Link } from "./ScheduledEvents"
-
-export enum Auras {
-  Atonement = "atonement",
-  Schism = "schism-aura",
-  Pain = "pain-aura",
-  PurgeTheWicked = "purge-the-wicked-aura",
-  Boon = "boon-aura",
-  SpiritShellModifier = "shell-modifier",
-  Rapture = "rapture-aura",
-}
+import type { EncounterState } from "."
+import { Auras, DURATION_INFINITE } from "./aurasConstants"
+import type { CombatEvent, PickFromUn } from "./events"
+import type { StatRatingsIn } from "./player"
+import type { Link } from "./ScheduledEvents"
+import { Spells } from "./spellsConstants"
 
 export interface Aura {
   id: Auras
@@ -25,22 +17,28 @@ export interface Aura {
 
 export interface AuraInfo {
   id: Auras
-  duration: number
+  duration: number | typeof DURATION_INFINITE
   dot?: {
+    spell: Spells
     interval: number
-    getDoTDamage: (stats: StatRatingsIn) => number
+    getDoTDamage: (stats: StatRatingsIn, auraInfo: AuraInfo) => number
   }
+  damageMultiplier?: Map<Spells, number>
   onExpire?: (event: PickFromUn<CombatEvent, "aura_remove">, encounter: EncounterState) => void
+}
+
+function getDoTDamage(stats: StatRatingsIn, auraInfo: AuraInfo) {
+  const coef = DbCoefs[auraInfo.id]!.db
+  return stats.intellect * coef
 }
 
 const Pain: AuraInfo = {
   id: Auras.Pain,
   duration: 12,
   dot: {
+    spell: Spells.PainDoT,
     interval: 2,
-    getDoTDamage(stats) {
-      return 0.57528 * stats.intellect
-    },
+    getDoTDamage,
   },
 }
 
@@ -48,10 +46,9 @@ const PurgeTheWicked: AuraInfo = {
   id: Auras.PurgeTheWicked,
   duration: 20,
   dot: {
+    spell: Spells.PurgeTheWickedDoT,
     interval: 2,
-    getDoTDamage(stats) {
-      return 1.24 * stats.intellect
-    },
+    getDoTDamage,
   },
 }
 
@@ -69,15 +66,14 @@ const Boon: AuraInfo = {
   id: Auras.Boon,
   duration: 10,
   onExpire(event, encounter) {
-    const { Spells, spells } = require("./spells") as typeof import("./spells")
+    const { spells } = require("./spells") as typeof import("./spells")
     const player = encounter.friendlyUnitsIdx.get(event.target)!
     const eruptionSpell = spells[Spells.AscendedEruption]
     const currentTarget = encounter.getSpellTarget(
       spells[Spells.AscendedEruption],
       event.target
     )[0]!
-    const mult = currentTarget.getAura(Auras.Schism) ? 1.25 : 1
-    const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player) * mult
+    const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player)
     encounter.scheduledEvents.push({
       time: encounter.time,
       event: {
@@ -102,6 +98,24 @@ const Rapture: AuraInfo = {
   duration: 8,
 }
 
+const DisciplineSpec: AuraInfo = {
+  id: Auras.DisciplineSpec,
+  duration: DURATION_INFINITE,
+  damageMultiplier: new Map(
+    Object.entries({
+      [Spells.Smite]: 0.7,
+      [Spells.Pain]: 1.01,
+      [Spells.PurgeTheWicked]: 0.94,
+      [Spells.Solace]: 0.94,
+      [Spells.Schism]: 0.94,
+      [Spells.PenanceEnemy]: 0.94,
+      [Spells.MindBlast]: 0.76,
+      [Spells.PainDoT]: 1.01,
+      [Spells.PurgeTheWickedDoT]: 0.94,
+    } as Record<Spells, number>)
+  ) as any,
+}
+
 export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Pain]: Pain,
   [Auras.PurgeTheWicked]: PurgeTheWicked,
@@ -110,4 +124,10 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Schism]: Schism,
   [Auras.SpiritShellModifier]: SpiritShellModifier,
   [Auras.Rapture]: Rapture,
+  [Auras.DisciplineSpec]: DisciplineSpec,
+}
+
+const DbCoefs: Partial<Record<Auras, { db: number }>> = {
+  [Auras.Pain]: { db: 0.57528 },
+  [Auras.PurgeTheWicked]: { db: 1.24 },
 }

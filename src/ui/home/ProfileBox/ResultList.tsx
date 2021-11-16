@@ -17,31 +17,37 @@ import {
   Tr,
   useDisclosure,
 } from "@chakra-ui/react"
-import React, { useMemo } from "react"
-import { EncounterState, getHealing } from "../../../calc"
+import React, { useEffect, useState } from "react"
+import { CalcResult, getHealing } from "../../../calc"
 import { EventTime } from "../../../calc/events"
-import { Spells } from "../../../calc/spells"
+import { Spells } from "../../../calc/spellsConstants"
 import { numberFormat } from "../../common/numberFormat"
+import { useDebounce } from "../../common/useDebounce"
 import { WowIcon } from "../../common/WowIcon"
 import { Profile } from "../../data/profile"
 
+type ResultsType = ({ type: "ok" } & CalcResult) | { type: "error"; error: any }
+
 export function ResultList({ profile }: { profile: Profile }) {
   const logModal = useDisclosure()
-  const results = useMemo(() => {
+  const throttledProfile = useDebounce(profile, 500)
+  const [results, setResults] = useState(null as null | ResultsType)
+  useEffect(() => {
     try {
-      const out = getHealing({ spells: profile.spells as Spells[] })
-      return { type: "ok" as const, ...out }
+      const out = getHealing({
+        spells: throttledProfile.spells as Spells[],
+        playerStatRatings: throttledProfile.stats,
+      })
+      setResults({ type: "ok" as const, ...out })
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error({ err })
-      return { type: "error" as const, error: err }
+      console.error("calc err", err)
+      setResults({ type: "error" as const, error: err })
     }
-  }, [profile.spells])
-  return (
-    <Stack className="box">
-      <Heading size="sm" as="h3">
-        Results
-      </Heading>
+  }, [throttledProfile.spells, throttledProfile.stats])
+
+  const content = results ? (
+    <>
       <HStack>
         {results.type === "ok" && (
           <>
@@ -51,9 +57,7 @@ export function ResultList({ profile }: { profile: Profile }) {
             </Stat>
             <Stat>
               <StatLabel>Time</StatLabel>
-              <StatNumber>
-                {results.time.toFixed(2).replace(/\./g, ",")} s
-              </StatNumber>
+              <StatNumber>{results.time.toFixed(2)} s</StatNumber>
             </Stat>
             <WowIcon
               className="clickable"
@@ -67,11 +71,7 @@ export function ResultList({ profile }: { profile: Profile }) {
         {results.type === "error" && <Box>{String(results.error)}</Box>}
       </HStack>
       {/* combat log modal + table */}
-      <Modal
-        isOpen={logModal.isOpen}
-        onClose={logModal.onClose}
-        scrollBehavior="inside"
-      >
+      <Modal isOpen={logModal.isOpen} onClose={logModal.onClose} scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxWidth="unset">
           <ModalHeader>Combat Log</ModalHeader>
@@ -92,8 +92,7 @@ export function ResultList({ profile }: { profile: Profile }) {
                 {results.type === "ok" &&
                   results.log.map(entry => {
                     const val1 = (entry.event as any).value
-                    const val2 =
-                      (val1 ?? null) === null ? "" : numberFormat(val1)
+                    const val2 = (val1 ?? null) === null ? "" : numberFormat(val1)
                     return (
                       <Tr key={entry.event.id}>
                         <Td>{entry.time.toFixed(2)}</Td>
@@ -110,6 +109,15 @@ export function ResultList({ profile }: { profile: Profile }) {
           </ModalBody>
         </ModalContent>
       </Modal>
+    </>
+  ) : null
+
+  return (
+    <Stack className="box">
+      <Heading size="sm" as="h3">
+        Results
+      </Heading>
+      {content}
     </Stack>
   )
 }

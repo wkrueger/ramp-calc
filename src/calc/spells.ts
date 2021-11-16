@@ -1,29 +1,8 @@
-import { EncounterState } from "."
-import { Auras } from "./auras"
-import { CombatEvent, PickFromUn } from "./events"
-import { Player, StatRatingsIn } from "./player"
-
-export enum Spells {
-  Smite = "smite",
-  Shield = "shield",
-  Radiance = "radiance",
-  Solace = "solace",
-  Boon = "boon",
-  AscendedBlast = "ascended-blast",
-  AscendedNova = "ascended-nova",
-  AscendedEruption = "ascendederuption",
-  Pain = "pain",
-  PurgeTheWicked = "purge-the-wicked",
-  Atonement = "atonement-heal",
-  PenanceFriendly = "penance-friendly",
-  PenanceEnemy = "penance-enemy",
-  Schism = "schism",
-  Evangelism = "evangelism",
-  SpiritShellHeal = "spirit-shell",
-  SpiritShellActivate = "spirit-shell-activate",
-  Rapture = "rapture",
-  ShadowMend = "shadow-mend",
-}
+import type { EncounterState } from "."
+import { Auras } from "./aurasConstants"
+import type { CombatEvent } from "./events"
+import type { Player, StatRatingsIn } from "./player"
+import { Spells } from "./spellsConstants"
 
 export enum Targetting {
   Self,
@@ -50,10 +29,16 @@ export interface Spell {
   }
   travelTime?: number
   passive?: boolean
-  getDamage?: (stats: StatRatingsIn, player: Player) => number
+  getDamage?: (this: this, stats: StatRatingsIn, player: Player) => number
   getHealing?: (stats: StatRatingsIn, caster: Player) => number
   onEffect?: (event: CombatEvent, es: EncounterState, caster: Player) => void
   allowed?: (player: Player) => boolean
+}
+
+function getDamage(this: Spell, stats: StatRatingsIn) {
+  const found = DbCoefs[this.id]
+  if (!found) throw Error(`Coef not set for ${this.id}`)
+  return found.db * stats.intellect
 }
 
 const Smite: Spell = {
@@ -62,7 +47,7 @@ const Smite: Spell = {
   icon: "spell_holy_holysmite",
   targetting: Targetting.Enemy,
   cast: 1.5,
-  getDamage: ({ intellect }) => intellect * 0.47,
+  getDamage,
 }
 
 const Pain: Spell = {
@@ -71,10 +56,17 @@ const Pain: Spell = {
   icon: "spell_shadow_shadowwordpain",
   targetting: Targetting.Enemy,
   cast: 0,
-  getDamage(stats) {
-    return 0.1292 * stats.intellect
-  },
+  getDamage,
   applyAura: Auras.Pain,
+}
+
+const PainDoT: Spell = {
+  id: Spells.PainDoT,
+  label: "Shadow Word: Pain (DoT)",
+  icon: "spell_shadow_shadowwordpain",
+  passive: true,
+  cast: 0,
+  targetting: Targetting.Enemy,
 }
 
 const PurgeTheWicked: Spell = {
@@ -83,10 +75,16 @@ const PurgeTheWicked: Spell = {
   icon: "ability_mage_firestarter",
   targetting: Targetting.Enemy,
   cast: 0,
-  getDamage(stats) {
-    return 0.223 * stats.intellect
-  },
+  getDamage,
   applyAura: Auras.PurgeTheWicked,
+}
+
+const PurgeTheWickedDoT: Spell = {
+  id: Spells.PurgeTheWickedDoT,
+  label: "Purge the Wicked (DoT)",
+  icon: "ability_mage_firestarter",
+  targetting: Targetting.Enemy,
+  cast: 0,
 }
 
 const Shield: Spell = {
@@ -130,9 +128,7 @@ const Solace: Spell = {
   targetting: Targetting.Enemy,
   cast: 0,
   travelTime: 0.4,
-  getDamage({ intellect }) {
-    return 0.8 * intellect
-  },
+  getDamage,
 }
 
 const Radiance: Spell = {
@@ -170,11 +166,9 @@ const Blast: Spell = {
   allowed(player) {
     return Boolean(player.getAura(Auras.Boon))
   },
-  getDamage({ intellect }) {
-    return 1.79 * intellect
-  },
+  getDamage,
   onEffect(ev, encounter, player) {
-    const aura = player.auras.find((x) => x.id === Auras.Boon)!
+    const aura = player.getAura(Auras.Boon)!
     aura.stacks = (aura.stacks || 1) + 5
   },
 }
@@ -189,11 +183,9 @@ const Nova: Spell = {
   allowed(player) {
     return Boolean(player.getAura(Auras.Boon))
   },
-  getDamage({ intellect }) {
-    return 0.74 * intellect
-  },
+  getDamage,
   onEffect(ev, encounter, player) {
-    const aura = player.auras.find((x) => x.id === Auras.Boon)!
+    const aura = player.getAura(Auras.Boon)!
     aura.stacks = (aura.stacks || 1) + 1
   },
 }
@@ -206,7 +198,7 @@ const Eruption: Spell = {
   cast: 0,
   passive: true,
   getDamage({ intellect }, player) {
-    const aura = player.auras.find((x) => x.id === Auras.Boon)!
+    const aura = player.getAura(Auras.Boon)!
     return 2.1 * intellect * (1 + 0.03 * (aura.stacks || 1))
   },
 }
@@ -218,9 +210,7 @@ const Schism: Spell = {
   targetting: Targetting.Enemy,
   applyAura: Auras.Schism,
   cast: 1.5,
-  getDamage({ intellect }) {
-    return 1.5 * intellect
-  },
+  getDamage,
 }
 
 const Evangelism: Spell = {
@@ -234,7 +224,7 @@ const Evangelism: Spell = {
       const atonement = unit.getAura(Auras.Atonement)
       if (!atonement) continue
       const expirationEvent = atonement.links.find(
-        (x) => !x._removed && x.value.event.type === "aura_remove"
+        x => !x._removed && x.value.event.type === "aura_remove"
       )
       if (!expirationEvent) continue
       atonement.expiredAt += 6
@@ -283,9 +273,7 @@ const PenanceEnemy: Spell = {
     ticks: 3,
   },
   travelTime: 0.4,
-  getDamage({ intellect }) {
-    return 0.4 * intellect
-  },
+  getDamage,
   cooldown: 9,
 }
 
@@ -302,10 +290,24 @@ const Rapture: Spell = {
   },
 }
 
+const MindBlast: Spell = {
+  id: Spells.MindBlast,
+  label: "Mind Blasr",
+  icon: "spell_shadow_unholyfrenzy",
+  targetting: Targetting.Enemy,
+  cast: 1.5,
+  cooldown: 15,
+  getDamage({ intellect }) {
+    return intellect * 0.9792
+  },
+}
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
+  [Spells.PainDoT]: PainDoT,
   [Spells.PurgeTheWicked]: PurgeTheWicked,
+  [Spells.PurgeTheWickedDoT]: PurgeTheWickedDoT,
   [Spells.Shield]: Shield,
   [Spells.Atonement]: Atonement,
   [Spells.Solace]: Solace,
@@ -321,4 +323,14 @@ export const spells: Record<string, Spell> = {
   [Spells.PenanceEnemy]: PenanceEnemy,
   [Spells.Rapture]: Rapture,
   [Spells.ShadowMend]: ShadowMend,
+  [Spells.MindBlast]: MindBlast,
+}
+
+const DbCoefs: Record<string, { db: number }> = {
+  [Spells.Smite]: { db: 0.47 },
+  [Spells.Pain]: { db: 0.1292 },
+  [Spells.PurgeTheWicked]: { db: 0.223 },
+  [Spells.Solace]: { db: 0.8 },
+  [Spells.Schism]: { db: 1.5 },
+  [Spells.PenanceEnemy]: { db: 1.2 / 3 },
 }

@@ -1,6 +1,8 @@
-import { EncounterState } from "."
-import { Aura, auras, Auras } from "./auras"
-import { spells, Spells } from "./spells"
+import type { EncounterState } from "."
+import { Aura, auras } from "./auras"
+import { Auras } from "./aurasConstants"
+import { spells } from "./spells"
+import { Spells } from "./spellsConstants"
 
 export type CombatEvent =
   | { id: number; type: "_queuenext" }
@@ -130,25 +132,33 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
   dmg: (event: PickFromUn<CombatEvent, "dmg">, encounter: EncounterState) => {
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
+    const target = encounter.enemyUnitsIdx.get(event.target)!
+    let schismMultiplier = 1
+    if (target.getAura(Auras.Schism) && !event.source.startsWith("pet")) {
+      schismMultiplier = 1.25
+    }
+    const casterMultSpell = event.spell ? caster.getDamageMultiplier(event.spell) : 1
     if (event.calcValue && event.spell) {
-      const target = encounter.enemyUnitsIdx.get(event.target)!
-      let multiplier = 1
-      if (target.getAura(Auras.Schism) && !event.source.startsWith("pet")) {
-        multiplier = 1.25
-      }
       const spellInfo = spells[event.spell]
       if (!spellInfo) throw Error("Spell not found.")
       if (spellInfo.getDamage) {
-        const value = spellInfo.getDamage(caster.stats.getStatRatings(), caster) * multiplier
+        const value =
+          spellInfo.getDamage(caster.stats.getStatRatings(), caster) *
+          schismMultiplier *
+          (1 + caster.stats.getVersatilityPct()) *
+          casterMultSpell
+        // * (1 + caster.stats.getCriticalPct())
         event.value = value
+      } else if (event.value) {
+        event.value =
+          event.value * schismMultiplier * (1 + caster.stats.getVersatilityPct()) * casterMultSpell
+        // * (1 + caster.stats.getCriticalPct())
       }
     }
     // atonement
     const hasShell = Boolean(caster.getAura(Auras.SpiritShellModifier))
     for (const unit of encounter.friendlyUnitsIdx.values()) {
-      const hasAtonement = unit.auras.some(
-        (aura) => aura.id === Auras.Atonement && aura.caster === caster.id
-      )
+      const hasAtonement = unit.getAura(Auras.Atonement, { caster: caster.id })
       if (hasAtonement) {
         const healValue = (event.value || 0) * caster.stats.getMasteryPct()
         const [spell, heal2] = hasShell
@@ -202,61 +212,65 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       throw Error("Aura info not found.")
     }
     const durationModifier = event.auraModifiers?.durationPct ?? 1
-    const auraExpireTime = encounter.time + auraInfo.duration * durationModifier
-    const link = encounter.scheduledEvents.push({
-      time: auraExpireTime,
-      event: {
-        id: encounter.createEventId(),
-        type: "aura_remove",
+    if (typeof auraInfo.duration === "number") {
+      const auraExpireTime = encounter.time + auraInfo.duration * durationModifier
+      const link = encounter.scheduledEvents.push({
+        time: auraExpireTime,
+        event: {
+          id: encounter.createEventId(),
+          type: "aura_remove",
+          eventReference: event.id,
+          target: target.id,
+          aura: event.aura,
+        },
+      })
+      const aura: Aura = {
+        id: event.aura,
+        appliedAt: encounter.time,
+        caster: event.source,
         eventReference: event.id,
-        target: target.id,
-        aura: event.aura,
-      },
-    })
-    const aura: Aura = {
-      id: event.aura,
-      appliedAt: encounter.time,
-      caster: event.source,
-      eventReference: event.id,
-      expiredAt: auraExpireTime,
-      links: [link],
-    }
-    target.auras.push(aura)
-    if (auraInfo.dot) {
-      const hastePct = 1 + caster.stats.getHastePct()
-      const damage = auraInfo.dot.getDoTDamage(caster.stats.getStatRatings()) * hastePct
-      const interval = auraInfo.dot.interval / hastePct
-      const nticks = auraInfo.duration / interval
-      const dmgPerTick = damage / nticks
-      const restTickDmg = dmgPerTick * (nticks % 1)
-      const fullTicks = Math.floor(nticks)
-      for (let tickIt = 0; tickIt < fullTicks; tickIt++) {
-        const tickTime = encounter.time + (tickIt + 1) * interval
+        expiredAt: auraExpireTime,
+        links: [link],
+      }
+      target.addAura(aura)
+      if (auraInfo.dot) {
+        const hastePct = 1 + caster.stats.getHastePct()
+        const damage = auraInfo.dot.getDoTDamage(caster.stats.getStatRatings(), auraInfo) * hastePct
+        const interval = auraInfo.dot.interval / hastePct
+        const nticks = auraInfo.duration / interval
+        const dmgPerTick = damage / nticks
+        const restTickDmg = dmgPerTick * (nticks % 1)
+        const fullTicks = Math.floor(nticks)
+        for (let tickIt = 0; tickIt < fullTicks; tickIt++) {
+          const tickTime = encounter.time + (tickIt + 1) * interval
+          const link = encounter.scheduledEvents.push({
+            time: tickTime,
+            event: {
+              id: encounter.createEventId(),
+              type: "dmg",
+              source: caster.id,
+              spell: auraInfo.dot.spell,
+              aura: event.aura,
+              target: target.id,
+              value: dmgPerTick,
+            },
+          })
+          aura.links.push(link)
+        }
         const link = encounter.scheduledEvents.push({
-          time: tickTime,
+          time: auraExpireTime,
           event: {
             id: encounter.createEventId(),
             type: "dmg",
             source: caster.id,
             aura: event.aura,
+            spell: auraInfo.dot.spell,
             target: target.id,
-            value: dmgPerTick,
+            value: restTickDmg,
           },
         })
         aura.links.push(link)
       }
-      const link = encounter.scheduledEvents.push({
-        time: auraExpireTime,
-        event: {
-          id: encounter.createEventId(),
-          type: "dmg",
-          source: caster.id,
-          aura: event.aura,
-          target: target.id,
-          value: restTickDmg,
-        },
-      })
-      aura.links.push(link)
     }
   },
   aura_remove: (event: PickFromUn<CombatEvent, "aura_remove">, encounter: EncounterState) => {
@@ -271,12 +285,6 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (auraInfo.onExpire) {
       auraInfo.onExpire(event, encounter)
     }
-    const targetAuraIndex = target.auras.findIndex(
-      (aura) => aura.eventReference === event.eventReference
-    )
-    if (targetAuraIndex === -1) {
-      throw Error("Target aura not found.")
-    }
-    target.auras.splice(targetAuraIndex, 1)
+    target.removeAura({ eventReference: event.eventReference })
   },
 }

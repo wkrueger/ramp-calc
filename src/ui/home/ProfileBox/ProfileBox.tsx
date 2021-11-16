@@ -26,13 +26,20 @@ import { conduitsIdx } from "../../data/conduits"
 import { covenants } from "../../data/covenants"
 import { Profile } from "../../data/profile"
 import { talentsIdx } from "../../data/talents"
-import { STATS_INFO } from "../Home"
 import { WowIcon } from "../../common/WowIcon"
 import { ConduitBox } from "./ConduitBox"
 import { CovenantBox } from "./CovenantBox"
 import { SpellsList } from "./SpellsList"
 import { TalentBox } from "./TalentBox"
 import { ResultList } from "./ResultList"
+
+export const STATS_INFO = [
+  { label: "Intellect", code: "intellect" },
+  { label: "Haste", code: "haste" },
+  { label: "Mastery", code: "mastery" },
+  { label: "Critical", code: "critical" },
+  { label: "Versatility", code: "versatility" },
+]
 
 const containerStyles: CSSObject = {
   ".popover-dialog": {
@@ -93,12 +100,7 @@ export function ProfileBox({
   const covenantObject = covenants.find(c => c.code === profile.covenant)!
 
   return (
-    <Flex
-      direction="column"
-      backgroundColor="rgba(255,255,255,0.1)"
-      p={4}
-      borderRadius="4px"
-    >
+    <Flex direction="column" backgroundColor="rgba(255,255,255,0.1)" p={4} borderRadius="4px">
       <Flex className="profile-1st-row" width="100%">
         <Heading size="md">
           <Editable value={profile.profileName} onChange={setProfileName}>
@@ -110,13 +112,7 @@ export function ProfileBox({
         <Button ml={2}>Load from SIMC...</Button>
         <Button ml={2}>Inspect/replace gear...</Button>
       </Flex>
-      <Flex
-        className="profile-2nd-row"
-        width="100%"
-        pt={4}
-        spacing={8}
-        sx={containerStyles}
-      >
+      <Flex className="profile-2nd-row" width="100%" pt={4} spacing={8} sx={containerStyles}>
         {/* stats */}
         <Stack className="box stats-box">
           <Heading size="sm" as="h3">
@@ -130,7 +126,7 @@ export function ProfileBox({
                     width="8ch"
                     textAlign="right"
                     name={`stats.${statInfo.code}`}
-                    value={profile.stats[statInfo.code]}
+                    value={(profile.stats as any)[statInfo.code]}
                     onChange={genericChangeProfile}
                   />
                   <Text flexGrow={1}>{statInfo.label}</Text>
@@ -194,11 +190,7 @@ export function ProfileBox({
               {profile.talents.map(talentCode => {
                 const talentObj = talentsIdx[talentCode]
                 return (
-                  <WowIcon
-                    key={talentObj.code}
-                    iconName={talentObj.icon}
-                    label={talentObj.label}
-                  />
+                  <WowIcon key={talentObj.code} iconName={talentObj.icon} label={talentObj.label} />
                 )
               })}
             </Stack>

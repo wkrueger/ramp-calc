@@ -1,8 +1,9 @@
 import { EventLog } from "./EventLog"
 import { CombatEvent, eventEffects } from "./events"
-import { Enemy, Player } from "./player"
+import { Enemy, Player, StatRatingsIn } from "./player"
 import { ScheduledEvents } from "./ScheduledEvents"
-import { Spell, spells, Spells, Targetting } from "./spells"
+import { Spell, spells, Targetting } from "./spells"
+import { Spells } from "./spellsConstants"
 
 export class EncounterState {
   private _eventIdCounter = 0
@@ -18,10 +19,10 @@ export class EncounterState {
   eventLog = new EventLog()
   time = 0
 
-  constructor() {
+  constructor(args: { playerStatRatings: StatRatingsIn }) {
     const friendlyUnits = Array(this.GROUP_SIZE)
       .fill(null)
-      .map((_, idx) => new Player({ id: String(idx) }))
+      .map((_, idx) => new Player({ id: String(idx), statRatings: args.playerStatRatings }))
     this.friendlyUnitsIdx = new Map()
     this.allUnitsIdx = new Map()
     for (const unit of friendlyUnits) {
@@ -33,8 +34,6 @@ export class EncounterState {
     this.enemyUnitsIdx.set(enemy.id, enemy)
     this.allUnitsIdx.set(enemy.id, enemy)
   }
-
-  on(eventType: string, handler: any) {}
 
   queueSequence(source: string, sequence: Spells[]) {
     sequence.forEach(spell => {
@@ -58,9 +57,7 @@ export class EncounterState {
       const result: Player[] = []
       for (const unit of this.friendlyUnitsIdx.values()) {
         if (applyAura) {
-          const hasAura = unit.auras.some(
-            aura => aura.id === applyAura && aura.caster === casterId
-          )
+          const hasAura = unit.getAura(applyAura, { caster: casterId })
           if (hasAura) continue
         }
         if (result.length < targetCount) {
@@ -90,9 +87,7 @@ export class EncounterState {
       throw Error(`Spell ${spellId} is passive and cant be invoked.`)
     }
     let damageTime = this.time + (spellInfo.travelTime || 0)
-    const currentTargets = this.getSpellTarget(spellInfo, caster.id).map(
-      t => t!.id
-    )
+    const currentTargets = this.getSpellTarget(spellInfo, caster.id).map(t => t!.id)
     const computedCast = spellInfo.cast / (1 + caster.stats.getHastePct())
     if (spellInfo.cast) {
       const castEnd = this.time + computedCast
@@ -146,8 +141,7 @@ export class EncounterState {
           spell: spellInfo.id,
         },
       })
-      const computedGCD =
-        (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
+      const computedGCD = (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
       if (queueNext) {
         out.scheduledEvents.push({
           time: this.time + computedGCD,
@@ -223,10 +217,7 @@ export class EncounterState {
   pushNextSpell() {
     const nextSpell = this.spellsQueued.shift()
     if (!nextSpell) return null
-    const { scheduledEvents } = this.createEventsForSpell(
-      nextSpell.spell,
-      nextSpell.source
-    )
+    const { scheduledEvents } = this.createEventsForSpell(nextSpell.spell, nextSpell.source)
     for (const item of scheduledEvents) {
       this.scheduledEvents.push(item)
     }
@@ -268,8 +259,10 @@ export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
   return out
 }
 
-export function getHealing(p: { spells: Spells[] }) {
-  const state = new EncounterState()
+export type CalcResult = ReturnType<typeof getHealing>
+
+export function getHealing(p: { spells: Spells[]; playerStatRatings: StatRatingsIn }) {
+  const state = new EncounterState({ playerStatRatings: p.playerStatRatings })
   state.queueSequence("0", p.spells)
   state.run()
   const healing = reduceEvents({ log: state.eventLog, type: "heal" })
