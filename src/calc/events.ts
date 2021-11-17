@@ -155,26 +155,12 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
         // * (1 + caster.stats.getCriticalPct())
       }
     }
-    // atonement
-    const hasShell = Boolean(caster.getAura(Auras.SpiritShellModifier))
-    for (const unit of encounter.friendlyUnitsIdx.values()) {
-      const hasAtonement = unit.getAura(Auras.Atonement, { caster: caster.id })
-      if (hasAtonement) {
-        const healValue = (event.value || 0) * caster.stats.getMasteryPct()
-        const [spell, heal2] = hasShell
-          ? [Spells.SpiritShellHeal, healValue * 0.8]
-          : [Spells.Atonement, healValue]
-        encounter.scheduledEvents.push({
-          time: encounter.time,
-          event: {
-            type: "heal",
-            id: encounter.createEventId(),
-            source: caster.id,
-            spell,
-            target: unit.id,
-            value: heal2,
-            sourceEvent: event.id,
-          },
+    if (event.spell) {
+      const spellInfo = spells[event.spell]
+      if (!spellInfo) throw Error("Spell not found.")
+      if (spellInfo.onDamage && spellInfo.onDamage.length) {
+        spellInfo.onDamage.forEach(handler => {
+          handler.trigger({ caster, event, encounter })
         })
       }
     }

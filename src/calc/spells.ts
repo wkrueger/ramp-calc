@@ -1,5 +1,6 @@
 import type { EncounterState } from "."
 import { Auras } from "./aurasConstants"
+import { DamageEffect, triggerAtonement, triggerHealAsDamagePct } from "./damageEffects"
 import type { CombatEvent } from "./events"
 import type { Player, StatRatingsIn } from "./player"
 import { Spells } from "./spellsConstants"
@@ -32,7 +33,15 @@ export interface Spell {
   getDamage?: (this: this, stats: StatRatingsIn, player: Player) => number
   getHealing?: (stats: StatRatingsIn, caster: Player) => number
   onEffect?: (event: CombatEvent, es: EncounterState, caster: Player) => void
+  onDamage?: Array<DamageEffect> // attaches to damage event, runs after damage calc
   allowed?: (player: Player) => boolean
+}
+
+function PriestSpell(spell: Spell): Spell {
+  return {
+    ...spell,
+    onDamage: [...(spell.onDamage || []), triggerAtonement],
+  }
 }
 
 function getDamage(this: Spell, stats: StatRatingsIn) {
@@ -41,16 +50,16 @@ function getDamage(this: Spell, stats: StatRatingsIn) {
   return found.db * stats.intellect
 }
 
-const Smite: Spell = {
+const Smite = PriestSpell({
   id: Spells.Smite,
   label: "Smite",
   icon: "spell_holy_holysmite",
   targetting: Targetting.Enemy,
   cast: 1.5,
   getDamage,
-}
+})
 
-const Pain: Spell = {
+const Pain = PriestSpell({
   id: Spells.Pain,
   label: "Shadow Word: Pain",
   icon: "spell_shadow_shadowwordpain",
@@ -58,18 +67,18 @@ const Pain: Spell = {
   cast: 0,
   getDamage,
   applyAura: Auras.Pain,
-}
+})
 
-const PainDoT: Spell = {
+const PainDoT = PriestSpell({
   id: Spells.PainDoT,
   label: "Shadow Word: Pain (DoT)",
   icon: "spell_shadow_shadowwordpain",
   passive: true,
   cast: 0,
   targetting: Targetting.Enemy,
-}
+})
 
-const PurgeTheWicked: Spell = {
+const PurgeTheWicked = PriestSpell({
   id: Spells.PurgeTheWicked,
   label: "Purge the Wicked",
   icon: "ability_mage_firestarter",
@@ -77,17 +86,17 @@ const PurgeTheWicked: Spell = {
   cast: 0,
   getDamage,
   applyAura: Auras.PurgeTheWicked,
-}
+})
 
-const PurgeTheWickedDoT: Spell = {
+const PurgeTheWickedDoT = PriestSpell({
   id: Spells.PurgeTheWickedDoT,
   label: "Purge the Wicked (DoT)",
   icon: "ability_mage_firestarter",
   targetting: Targetting.Enemy,
   cast: 0,
-}
+})
 
-const Shield: Spell = {
+const Shield = PriestSpell({
   id: Spells.Shield,
   label: "Power Word: Shield",
   icon: "spell_holy_powerwordshield",
@@ -98,9 +107,9 @@ const Shield: Spell = {
     const raptureMod = caster.getAura(Auras.Rapture) ? 2 : 1
     return 1.65 * intellect * raptureMod
   },
-}
+})
 
-const ShadowMend: Spell = {
+const ShadowMend = PriestSpell({
   id: Spells.ShadowMend,
   label: "Shadow Mend",
   icon: "spell_shadow_shadowmend",
@@ -110,7 +119,7 @@ const ShadowMend: Spell = {
   getHealing({ intellect }) {
     return 3.2 * intellect
   },
-}
+})
 
 const Atonement: Spell = {
   id: Spells.Atonement,
@@ -121,7 +130,7 @@ const Atonement: Spell = {
   cast: 0,
 }
 
-const Solace: Spell = {
+const Solace = PriestSpell({
   id: Spells.Solace,
   label: "Solace",
   icon: "ability_priest_flashoflight",
@@ -129,9 +138,9 @@ const Solace: Spell = {
   cast: 0,
   travelTime: 0.4,
   getDamage,
-}
+})
 
-const Radiance: Spell = {
+const Radiance = PriestSpell({
   id: Spells.Radiance,
   label: "Power Word: Radiance",
   icon: "spell_priest_power-word",
@@ -145,18 +154,27 @@ const Radiance: Spell = {
   getHealing({ intellect }) {
     return intellect * 1.05
   },
-}
+})
 
-const Boon: Spell = {
+const Boon = PriestSpell({
   id: Spells.Boon,
   label: "Boon of The Ascended",
   icon: "ability_bastion_priest",
   targetting: Targetting.Self,
   cast: 1.5,
   applyAura: Auras.Boon,
-}
+})
 
-const Blast: Spell = {
+const AscendedBlastHeal = PriestSpell({
+  id: Spells.AscendedBlastHeal,
+  label: "Ascended Blast (Heal)",
+  icon: "spell_animabastion_missile",
+  targetting: Targetting.Friendly,
+  passive: true,
+  cast: 0,
+})
+
+const AscendedBlast = PriestSpell({
   id: Spells.AscendedBlast,
   label: "Ascended Blast",
   icon: "spell_animabastion_missile",
@@ -171,9 +189,20 @@ const Blast: Spell = {
     const aura = player.getAura(Auras.Boon)!
     aura.stacks = (aura.stacks || 1) + 5
   },
-}
+  onDamage: [triggerHealAsDamagePct({ k: 1.2, spell: AscendedBlastHeal })],
+})
 
-const Nova: Spell = {
+const AscendedNovaHeal = PriestSpell({
+  id: Spells.AscendedNovaHeal,
+  label: "Ascended Nova (Heal)",
+  icon: "spell_animabastion_nova",
+  targetting: Targetting.Friendly,
+  targetCount: 6,
+  passive: true,
+  cast: 0,
+})
+
+const AscendedNova = PriestSpell({
   id: Spells.AscendedNova,
   label: "Ascended Nova",
   icon: "spell_animabastion_nova",
@@ -188,9 +217,10 @@ const Nova: Spell = {
     const aura = player.getAura(Auras.Boon)!
     aura.stacks = (aura.stacks || 1) + 1
   },
-}
+  onDamage: [triggerHealAsDamagePct({ k: 0.24, spell: AscendedNovaHeal })],
+})
 
-const Eruption: Spell = {
+const Eruption = PriestSpell({
   id: Spells.AscendedEruption,
   label: "Ascended Eruption",
   icon: "ability_bastion_priest",
@@ -201,9 +231,9 @@ const Eruption: Spell = {
     const aura = player.getAura(Auras.Boon)!
     return 2.1 * intellect * (1 + 0.03 * (aura.stacks || 1))
   },
-}
+})
 
-const Schism: Spell = {
+const Schism = PriestSpell({
   id: Spells.Schism,
   label: "Schism",
   icon: "spell_warlock_focusshadow",
@@ -211,9 +241,9 @@ const Schism: Spell = {
   applyAura: Auras.Schism,
   cast: 1.5,
   getDamage,
-}
+})
 
-const Evangelism: Spell = {
+const Evangelism = PriestSpell({
   id: Spells.Evangelism,
   label: "Evangelism",
   icon: "spell_holy_divineillumination",
@@ -235,18 +265,18 @@ const Evangelism: Spell = {
       })
     }
   },
-}
+})
 
-const SpiritShellActivate: Spell = {
+const SpiritShellActivate = PriestSpell({
   id: Spells.SpiritShellActivate,
   label: "Spirit Shell",
   icon: "ability_shaman_astralshift",
   targetting: Targetting.Self,
   cast: 0,
   applyAura: Auras.SpiritShellModifier,
-}
+})
 
-const PenanceFriendly: Spell = {
+const PenanceFriendly = PriestSpell({
   id: Spells.PenanceFriendly,
   label: "Penance (target friend)",
   icon: "spell_holy_penance",
@@ -261,9 +291,9 @@ const PenanceFriendly: Spell = {
     return 1.25 * intellect
   },
   cooldown: 9,
-}
+})
 
-const PenanceEnemy: Spell = {
+const PenanceEnemy = PriestSpell({
   id: Spells.PenanceEnemy,
   label: "Penance (offensive)",
   icon: "spell_holy_penance",
@@ -275,9 +305,9 @@ const PenanceEnemy: Spell = {
   travelTime: 0.4,
   getDamage,
   cooldown: 9,
-}
+})
 
-const Rapture: Spell = {
+const Rapture = PriestSpell({
   id: Spells.Rapture,
   label: "Rapture",
   icon: "spell_holy_rapture",
@@ -288,9 +318,9 @@ const Rapture: Spell = {
   onEffect(ev, es, caster) {
     es.createEventsForSpell(Spells.Shield, caster.id, false)
   },
-}
+})
 
-const MindBlast: Spell = {
+const MindBlast = PriestSpell({
   id: Spells.MindBlast,
   label: "Mind Blasr",
   icon: "spell_shadow_unholyfrenzy",
@@ -300,7 +330,7 @@ const MindBlast: Spell = {
   getDamage({ intellect }) {
     return intellect * 0.9792
   },
-}
+})
 
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
@@ -313,9 +343,11 @@ export const spells: Record<string, Spell> = {
   [Spells.Solace]: Solace,
   [Spells.Radiance]: Radiance,
   [Spells.Boon]: Boon,
-  [Spells.AscendedBlast]: Blast,
+  [Spells.AscendedBlast]: AscendedBlast,
+  [Spells.AscendedBlastHeal]: AscendedBlastHeal,
   [Spells.AscendedEruption]: Eruption,
-  [Spells.AscendedNova]: Nova,
+  [Spells.AscendedNova]: AscendedNova,
+  [Spells.AscendedNovaHeal]: AscendedNovaHeal,
   [Spells.Schism]: Schism,
   [Spells.Evangelism]: Evangelism,
   [Spells.SpiritShellActivate]: SpiritShellActivate,
@@ -333,4 +365,6 @@ const DbCoefs: Record<string, { db: number }> = {
   [Spells.Solace]: { db: 0.8 },
   [Spells.Schism]: { db: 1.5 },
   [Spells.PenanceEnemy]: { db: 1.2 / 3 },
+  [Spells.AscendedBlast]: { db: 1.79 },
+  [Spells.AscendedNova]: { db: 0.74 },
 }
