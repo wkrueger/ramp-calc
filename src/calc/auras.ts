@@ -1,4 +1,4 @@
-import type { EncounterState } from "."
+import type { EncounterState } from "./EncounterState"
 import { Auras, DURATION_INFINITE } from "./aurasConstants"
 import type { CombatEvent, PickFromUn } from "./events"
 import type { StatRatingsIn } from "./player"

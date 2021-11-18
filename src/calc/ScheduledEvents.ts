@@ -1,4 +1,4 @@
-import { CombatEvent } from "./events"
+import { CombatEvent, EventTime } from "./events"
 
 export interface Link {
   value: {
@@ -15,6 +15,14 @@ export class ScheduledEvents {
   private headLink: Link | null = null
   private tailLink: Link | null = null
 
+  compare(a: EventTime, b: EventTime) {
+    if (a.time < b.time) return -1
+    if (a.time > b.time) return 1
+    if (a.event.type === "_queuenext" && b.event.type !== "_queuenext") return 1
+    if (b.event.type === "_queuenext" && a.event.type !== "_queuenext") return -1
+    return 0
+  }
+
   push(obj: { event: CombatEvent; time: number }) {
     const { time } = obj
     if (!this.tailLink) {
@@ -25,7 +33,7 @@ export class ScheduledEvents {
     }
     let current = this.tailLink
     while (true) {
-      if (time < current.value.time) {
+      if (this.compare(obj, current.value) < 0 /*time < current.value.time*/) {
         if (!current.prev) {
           // start of chain
           const newLink: Link = { value: obj, next: current, prev: null }

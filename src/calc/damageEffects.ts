@@ -1,4 +1,4 @@
-import type { EncounterState } from "."
+import type { EncounterState } from "./EncounterState"
 import { Auras } from "./aurasConstants"
 import type { CombatEvent, PickFromUn } from "./events"
 import { Player } from "./player"

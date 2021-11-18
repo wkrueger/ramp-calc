@@ -1,4 +1,4 @@
-import type { EncounterState } from "."
+import type { EncounterState } from "./EncounterState"
 import { Aura, auras } from "./auras"
 import { Auras } from "./aurasConstants"
 import { spells } from "./spells"
