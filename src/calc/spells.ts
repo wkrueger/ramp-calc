@@ -19,9 +19,11 @@ export interface Spell {
   label: string
   cast: number
   icon: string
-  channel?: {
-    ticks: number
-  }
+  channel?:
+    | {
+        ticks: number
+      }
+    | ((p: Player) => { ticks: number })
   gcd?: number
   cooldown?: number
   targetting: Targetting
@@ -300,8 +302,9 @@ const PenanceFriendly = PriestSpell({
   icon: "spell_holy_penance",
   targetting: Targetting.Friendly,
   cast: 2,
-  channel: {
-    ticks: 3,
+  channel: player => {
+    const nticks = player.getTalent(Talents.Castigation) ? 4 : 3
+    return { ticks: nticks }
   },
   travelTime: 0.4,
   getHealing({ intellect }) {
@@ -317,8 +320,9 @@ const PenanceEnemy = PriestSpell({
   icon: "spell_holy_penance",
   targetting: Targetting.Enemy,
   cast: 2,
-  channel: {
-    ticks: 3,
+  channel: player => {
+    const nticks = player.getTalent(Talents.Castigation) ? 4 : 3
+    return { ticks: nticks }
   },
   travelTime: 0.4,
   getDamage,

@@ -1,3 +1,4 @@
+import { Talents } from "../data/talents"
 import { auras } from "./auras"
 import { Auras } from "./aurasConstants"
 import { EventLog } from "./EventLog"
@@ -22,10 +23,17 @@ export class EncounterState {
   eventLog = new EventLog()
   time = 0
 
-  constructor(args: { playerStatRatings: StatRatingsIn }) {
+  constructor(args: { playerStatRatings: StatRatingsIn; talents: Talents[] }) {
     const friendlyUnits = Array(this.GROUP_SIZE)
       .fill(null)
-      .map((_, idx) => new Player({ id: String(idx), statRatings: args.playerStatRatings }))
+      .map((_, idx) => {
+        const toSetTalents = idx === 0 ? args.talents : []
+        return new Player({
+          id: String(idx),
+          statRatings: args.playerStatRatings,
+          talents: toSetTalents,
+        })
+      })
     friendlyUnits[0].addAura({
       id: Auras.DisciplineSpec,
       appliedAt: 0,
@@ -171,7 +179,10 @@ export class EncounterState {
         if (!spellInfo.channel) {
           ticksInfo = [damageTime]
         } else {
-          const nticks = spellInfo.channel.ticks
+          const nticks =
+            typeof spellInfo.channel === "function"
+              ? spellInfo.channel(caster).ticks
+              : spellInfo.channel.ticks
           const tickTime = computedCast / (nticks - 1)
           ticksInfo = Array.from({ length: nticks }, (_, index) => {
             return this.time + index * tickTime + (spellInfo.travelTime || 0)

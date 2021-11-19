@@ -20,12 +20,12 @@ import {
 } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
 import { CalcResult, getHealing } from "../../../calc"
-import { CombatEvent, EventTime, PickFromUn } from "../../../calc/events"
+import { EventTime } from "../../../calc/events"
 import { Spells } from "../../../calc/spellsConstants"
+import { Profile } from "../../../data/profile"
 import { numberFormat } from "../../common/numberFormat"
 import { useDebounce } from "../../common/useDebounce"
 import { WowIcon } from "../../common/WowIcon"
-import { Profile } from "../../../data/profile"
 
 type ResultsType = ({ type: "ok" } & CalcResult) | { type: "error"; error: any }
 
@@ -76,6 +76,7 @@ export function ResultList({ profile }: { profile: Profile }) {
       let calc = getHealing({
         spells: throttledProfile.spells as Spells[],
         playerStatRatings: throttledProfile.stats,
+        talents: throttledProfile.talents,
       })
       if (doMerge) {
         calc.log = mergeEvents(calc.log)
@@ -86,7 +87,7 @@ export function ResultList({ profile }: { profile: Profile }) {
       console.error("calc err", err)
       setResults({ type: "error" as const, error: err })
     }
-  }, [doMerge, throttledProfile.spells, throttledProfile.stats])
+  }, [doMerge, throttledProfile.spells, throttledProfile.stats, throttledProfile.talents])
 
   const content = results ? (
     <>

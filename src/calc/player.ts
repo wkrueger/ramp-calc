@@ -1,4 +1,4 @@
-import { TalentInfo, Talents } from "../data/talents"
+import { TalentInfo, Talents, talentsIdx } from "../data/talents"
 import { Aura, auras } from "./auras"
 import { Auras } from "./aurasConstants"
 import type { CombatEvent } from "./events"
@@ -32,12 +32,13 @@ export class Player {
     10: 1.03,
   }
 
-  constructor(args: { id: string; statRatings: StatRatingsIn; talents?: TalentInfo[] }) {
+  constructor(args: { id: string; statRatings: StatRatingsIn; talents?: Talents[] }) {
     this.id = args.id
     this.stats = new StatsHandler({ ratings: args.statRatings })
     this.damageMultAurasBySpell = new Map()
     for (let talent of args.talents || []) {
-      this.talents[talent.code] = talent
+      const obj = talentsIdx[talent]
+      this.talents[talent] = obj
     }
   }
 
