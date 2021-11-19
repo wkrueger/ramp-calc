@@ -1,5 +1,3 @@
-import { StatRatingsIn } from "../calc/player"
-
 // my toon
 // intellect 1978
 // haste 995
@@ -24,10 +22,6 @@ import { StatRatingsIn } from "../calc/player"
 // smite 225 212.4
 // mind 337 calc 442.6
 // purge initial dmg 95
-
-interface TestCase {
-  stats: StatRatingsIn
-}
 
 export function DamageTester() {
   return (

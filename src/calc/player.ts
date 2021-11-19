@@ -1,114 +1,44 @@
+import { TalentInfo, Talents } from "../data/talents"
 import { Aura, auras } from "./auras"
 import { Auras } from "./aurasConstants"
+import type { CombatEvent } from "./events"
 import { Spells } from "./spellsConstants"
+import { StatRatingsIn, StatsHandler } from "./StatsHandler"
 
 // export type UnitState =
 //   | { type: "idle" }
 //   | { type: "casting"; spell: Spells; start: number; end: number }
 //   | { type: "gcd"; start: number; end: number }
 
-export interface StatRatingsIn {
-  haste: number
-  critical: number
-  mastery: number
-  versatility: number
-  intellect: number
-}
-
-const CONVERSION_TABLE = {
-  critical: 35, // 35 rating for 1%
-  haste: 33,
-  versatility: 40,
-  mastery: 35, // conversion to mastery points, an intermediary stat
-}
-
-// for priest
-const BASE_PCT_LV60 = {
-  critical: 6,
-  mastery: 10.8,
-  haste: 0,
-  versatility: 0,
-}
-
-// 1 mastery point gives 1.35% atonement transfer for disx priest
-const MASTERY_POINT_RATING = 1.35
-
-const PENALTY_TABLE = new Map([
-  [[0, 0.3], 0],
-  [[0.3, 0.39], 0.1],
-  [[0.39, 0.47], 0.2],
-  [[0.47, 0.54], 0.3],
-  [[0.54, 0.66], 0.4],
-  [[0.66, 1.26], 0.5],
-  [[1.26, Infinity], 1],
-])
-
-function applyStatDR(value: number) {
-  let out = 0
-  // let lastRange = null
-  for (let [[from, to], penalty] of PENALTY_TABLE.entries()) {
-    if (value < from) {
-      // console.log({ lastRange })
-      return out
-    }
-    // lastRange = from
-    const slice = Math.min(value, to) - from
-    out += slice * (1 - penalty)
-  }
-  return out
-}
-
-export class StatsHandler {
-  protected ratings: StatRatingsIn
-  conversionTable = CONVERSION_TABLE
-  basePct = BASE_PCT_LV60
-  masteryPointRating = MASTERY_POINT_RATING
-
-  constructor(args: { ratings: StatRatingsIn }) {
-    this.ratings = args.ratings
-  }
-
-  getStatRatings() {
-    return this.ratings
-  }
-
-  getHastePct() {
-    const beforeDR = this.ratings.haste / this.conversionTable.haste / 100
-    const fromRating = applyStatDR(beforeDR)
-    return this.basePct.haste / 100 + fromRating
-  }
-
-  getCriticalPct() {
-    const fromRating = applyStatDR(this.ratings.critical / this.conversionTable.critical / 100)
-    return this.basePct.critical / 100 + fromRating
-  }
-
-  getVersatilityPct() {
-    const fromRating = applyStatDR(
-      this.ratings.versatility / this.conversionTable.versatility / 100
-    )
-    return this.basePct.versatility / 100 + fromRating
-  }
-
-  getMasteryPct() {
-    const masteryPoints = applyStatDR(this.ratings.mastery / this.conversionTable.mastery / 100)
-    const masteryPctFromRating = masteryPoints * this.masteryPointRating
-    return this.basePct.mastery / 100 + masteryPctFromRating
-  }
-}
-
 export class Player {
   id: string
   stats: StatsHandler
   private auras: Aura[] = []
+  private talents: Partial<Record<Talents, TalentInfo>> = {}
   protected recharges = new Map<Spells, number>()
-
   private damageMultAurasBySpell: Map<Spells, Map<Auras, number>>
+  private atonementCount = 0
 
-  constructor(args: { id: string; statRatings: StatRatingsIn }) {
+  SINS_DMG_MULT = {
+    1: 1.12,
+    2: 1.1,
+    3: 1.08,
+    4: 1.07,
+    5: 1.06,
+    6: 1.06,
+    7: 1.05,
+    8: 1.04,
+    9: 1.04,
+    10: 1.03,
+  }
+
+  constructor(args: { id: string; statRatings: StatRatingsIn; talents?: TalentInfo[] }) {
     this.id = args.id
     this.stats = new StatsHandler({ ratings: args.statRatings })
     this.damageMultAurasBySpell = new Map()
+    for (let talent of args.talents || []) {
+      this.talents[talent.code] = talent
+    }
   }
 
   getAura(aura: Auras, opts: { caster?: string } = {}) {
@@ -150,10 +80,20 @@ export class Player {
     this.auras.splice(index, 1)
   }
 
+  getTalent(code: Talents) {
+    return this.talents[code]
+  }
+
   getDamageMultiplier(spell: Spells) {
+    let baseMult = 1
+    if (this.getTalent(Talents.SinsOfTheMany)) {
+      if (this.atonementCount <= 1) baseMult = this.SINS_DMG_MULT[1]
+      else if (this.atonementCount >= 10) baseMult = this.SINS_DMG_MULT[10]
+      else baseMult = (this.SINS_DMG_MULT as any)[this.atonementCount]
+    }
     const found = this.damageMultAurasBySpell.get(spell)
-    if (!found) return 1
-    let out = 1
+    if (!found) return baseMult
+    let out = baseMult
     for (let mult of found.values()) {
       out = out * mult
     }
@@ -168,6 +108,15 @@ export class Player {
 
   setSpellRecharge(spell: Spells, time: number) {
     this.recharges.set(spell, time)
+  }
+
+  onEvent(event: CombatEvent) {
+    if (this.id !== "0") return
+    if (event.type === "aura_apply" && event.aura === Auras.Atonement) {
+      this.atonementCount++
+    } else if (event.type === "aura_remove" && event.aura === Auras.Atonement) {
+      this.atonementCount--
+    }
   }
 }
 

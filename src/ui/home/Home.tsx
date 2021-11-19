@@ -3,7 +3,7 @@ import React, { memo, useCallback, useEffect, useState } from "react"
 import immer from "immer"
 import { WithIndexSetter } from "../common/WIthIndexSetter"
 import { ProfileBox } from "./ProfileBox/ProfileBox"
-import { initialProfile, Profile } from "../data/profile"
+import { initialProfile, Profile } from "../../data/profile"
 import useThrottle from "../common/useThrottle"
 
 const ProfileMemo = memo(ProfileBox)

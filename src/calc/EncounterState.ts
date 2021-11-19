@@ -1,9 +1,12 @@
+import { auras } from "./auras"
+import { Auras } from "./aurasConstants"
 import { EventLog } from "./EventLog"
 import { CombatEvent, eventEffects } from "./events"
-import { Enemy, Player, StatRatingsIn } from "./player"
+import { Enemy, Player } from "./Player"
 import { ScheduledEvents } from "./ScheduledEvents"
 import { Spell, spells, Targetting } from "./spells"
 import { Spells } from "./spellsConstants"
+import { StatRatingsIn } from "./StatsHandler"
 
 export class EncounterState {
   private _eventIdCounter = 0
@@ -23,6 +26,14 @@ export class EncounterState {
     const friendlyUnits = Array(this.GROUP_SIZE)
       .fill(null)
       .map((_, idx) => new Player({ id: String(idx), statRatings: args.playerStatRatings }))
+    friendlyUnits[0].addAura({
+      id: Auras.DisciplineSpec,
+      appliedAt: 0,
+      caster: "0",
+      expiredAt: null as any,
+      eventReference: null as any,
+      links: [],
+    })
     this.friendlyUnitsIdx = new Map()
     this.allUnitsIdx = new Map()
     for (const unit of friendlyUnits) {

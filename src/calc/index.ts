@@ -1,7 +1,7 @@
 import { EncounterState } from "./EncounterState"
 import { EventLog } from "./EventLog"
-import { StatRatingsIn } from "./player"
 import { Spells } from "./spellsConstants"
+import { StatRatingsIn } from "./StatsHandler"
 
 export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
   let out = 0

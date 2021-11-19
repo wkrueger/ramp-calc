@@ -1,9 +1,9 @@
 import type { EncounterState } from "./EncounterState"
 import { Auras, DURATION_INFINITE } from "./aurasConstants"
 import type { CombatEvent, PickFromUn } from "./events"
-import type { StatRatingsIn } from "./player"
 import type { Link } from "./ScheduledEvents"
 import { Spells } from "./spellsConstants"
+import { StatRatingsIn } from "./StatsHandler"
 
 export interface Aura {
   id: Auras
@@ -98,12 +98,17 @@ const Rapture: AuraInfo = {
   duration: 8,
 }
 
+const SinsOfTheMany: AuraInfo = {
+  id: Auras.SinsOfTheMany,
+  duration: DURATION_INFINITE,
+}
+
 const DisciplineSpec: AuraInfo = {
   id: Auras.DisciplineSpec,
   duration: DURATION_INFINITE,
   damageMultiplier: new Map(
     Object.entries({
-      [Spells.Smite]: 0.7,
+      [Spells.Smite]: 0.7 * 1.5,
       [Spells.Pain]: 1.01,
       [Spells.PurgeTheWicked]: 0.94,
       [Spells.Solace]: 0.94,

@@ -7,6 +7,7 @@ export enum Auras {
   SpiritShellModifier = "shell-modifier",
   Rapture = "rapture-aura",
   DisciplineSpec = "discipline-spec",
+  SinsOfTheMany = "sins-of-the-many",
 }
 
 export const DURATION_INFINITE = Symbol()

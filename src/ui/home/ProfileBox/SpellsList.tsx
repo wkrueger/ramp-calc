@@ -9,14 +9,14 @@ import {
   PopoverContent,
   PopoverTrigger,
   Select,
-} from "@chakra-ui/react";
-import clsx from "clsx";
-import React, { useCallback, useMemo, useState } from "react";
-import { Spell, spells } from "../../../calc/spells";
-import { presets, presetsIdx } from "../../data/presets";
-import { Profile } from "../../data/profile";
-import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon";
-import { SpellsBox } from "./SpellsBox";
+} from "@chakra-ui/react"
+import clsx from "clsx"
+import React, { useCallback, useMemo, useState } from "react"
+import { Spell, spells } from "../../../calc/spells"
+import { presets, presetsIdx } from "../../../data/presets"
+import { Profile } from "../../../data/profile"
+import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon"
+import { SpellsBox } from "./SpellsBox"
 
 const containerStyles: CSSObject = {
   ".icon-wrap": {
@@ -45,70 +45,63 @@ const containerStyles: CSSObject = {
     cursor: "pointer",
     userSelect: "none",
   },
-};
+}
 
 export function SpellsList({
   profile,
   setProfile,
 }: {
-  profile: Profile;
-  setProfile: (cb: (s: Profile) => Profile) => void;
+  profile: Profile
+  setProfile: (cb: (s: Profile) => Profile) => void
 }) {
-  const [currentPosition, setCurrentPosition] = useState(0);
-  const [isSpellsPopoverOpen, setSpellsPopoverOpen] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState("boon-ev");
+  const [currentPosition, setCurrentPosition] = useState(0)
+  const [isSpellsPopoverOpen, setSpellsPopoverOpen] = useState(false)
+  const [selectedPreset, setSelectedPreset] = useState("boon-ev")
 
   const handlePresetChange = useCallback(
     ev => {
-      const { value: code } = ev.target;
-      const found = presetsIdx[code];
-      const toSet = found?.spells || [];
-      setSelectedPreset(code);
+      const { value: code } = ev.target
+      const found = presetsIdx[code]
+      const toSet = found?.spells || []
+      setSelectedPreset(code)
       setProfile(prev => {
-        return { ...prev, spells: toSet };
-      });
+        return { ...prev, spells: toSet }
+      })
     },
     [setProfile]
-  );
+  )
 
   const handleIconClick = useMemo(
     () => (index: number) => (ev: any) => {
-      ev.stopPropagation();
-      setCurrentPosition(index);
-      setSpellsPopoverOpen(true);
+      ev.stopPropagation()
+      setCurrentPosition(index)
+      setSpellsPopoverOpen(true)
     },
     [setSpellsPopoverOpen]
-  );
+  )
 
   const handleRemove = useMemo(
     () => (index: number) => (ev: any) => {
-      ev.preventDefault();
+      ev.preventDefault()
       setProfile(prev => {
-        const updated = [
-          ...prev.spells.slice(0, index),
-          ...prev.spells.slice(index + 1),
-        ];
-        return { ...prev, spells: updated };
-      });
+        const updated = [...prev.spells.slice(0, index), ...prev.spells.slice(index + 1)]
+        return { ...prev, spells: updated }
+      })
     },
     [setProfile]
-  );
+  )
 
   const handleSpellSelect = useCallback(
     (spell: Spell) => {
-      const pos = currentPosition;
+      const pos = currentPosition
       setProfile(prev => {
-        const updated = [
-          ...prev.spells.slice(0, pos),
-          spell.id,
-          ...prev.spells.slice(pos),
-        ];
-        return { ...prev, spells: updated };
-      });
-      setCurrentPosition(pos + 1);
+        const updated = [...prev.spells.slice(0, pos), spell.id, ...prev.spells.slice(pos)]
+        return { ...prev, spells: updated }
+      })
+      setCurrentPosition(pos + 1)
     },
     [currentPosition, setProfile]
-  );
+  )
 
   return (
     <Flex direction="column" className="box" sx={containerStyles}>
@@ -131,7 +124,7 @@ export function SpellsList({
               <option key={preset.code} value={preset.code}>
                 {preset.name}
               </option>
-            );
+            )
           })}
         </Select>
       </Box>
@@ -156,10 +149,10 @@ export function SpellsList({
                 }}
               >
                 {profile.spells.map((spellCode, idx) => {
-                  const spellObj = spells[spellCode];
-                  const hasAffix = spellsWithAffix[spellObj.id];
-                  const affix = hasAffix ? Affix(hasAffix) : undefined;
-                  const isInsertHere = idx === currentPosition;
+                  const spellObj = spells[spellCode]
+                  const hasAffix = spellsWithAffix[spellObj.id]
+                  const affix = hasAffix ? Affix(hasAffix) : undefined
+                  const isInsertHere = idx === currentPosition
                   return (
                     <div
                       key={spellCode + "-" + idx}
@@ -177,7 +170,7 @@ export function SpellsList({
                         affix={affix}
                       />
                     </div>
-                  );
+                  )
                 })}
               </Flex>
             </Box>
@@ -185,14 +178,11 @@ export function SpellsList({
           <PopoverContent width="unset">
             <PopoverArrow />
             <PopoverBody>
-              <SpellsBox
-                className="popover-dialog"
-                onSelect={handleSpellSelect}
-              />
+              <SpellsBox className="popover-dialog" onSelect={handleSpellSelect} />
             </PopoverBody>
           </PopoverContent>
         </Popover>
       </Box>
     </Flex>
-  );
+  )
 }

@@ -2,8 +2,10 @@ import type { EncounterState } from "./EncounterState"
 import { Auras } from "./aurasConstants"
 import { DamageEffect, triggerAtonement, triggerHealAsDamagePct } from "./damageEffects"
 import type { CombatEvent } from "./events"
-import type { Player, StatRatingsIn } from "./player"
+import type { Player } from "./Player"
 import { Spells } from "./spellsConstants"
+import { StatRatingsIn } from "./StatsHandler"
+import { Talents } from "../data/talents"
 
 export enum Targetting {
   Self,
@@ -67,6 +69,9 @@ const Pain = PriestSpell({
   cast: 0,
   getDamage,
   applyAura: Auras.Pain,
+  allowed(player) {
+    return !player.getTalent(Talents.PurgeTheWicked)
+  },
 })
 
 const PainDoT = PriestSpell({
@@ -86,6 +91,9 @@ const PurgeTheWicked = PriestSpell({
   cast: 0,
   getDamage,
   applyAura: Auras.PurgeTheWicked,
+  allowed(player) {
+    return Boolean(player.getTalent(Talents.PurgeTheWicked))
+  },
 })
 
 const PurgeTheWickedDoT = PriestSpell({
@@ -93,6 +101,7 @@ const PurgeTheWickedDoT = PriestSpell({
   label: "Purge the Wicked (DoT)",
   icon: "ability_mage_firestarter",
   targetting: Targetting.Enemy,
+  passive: true,
   cast: 0,
 })
 
@@ -138,6 +147,9 @@ const Solace = PriestSpell({
   cast: 0,
   travelTime: 0.4,
   getDamage,
+  allowed(player) {
+    return Boolean(player.getTalent(Talents.Solace))
+  },
 })
 
 const Radiance = PriestSpell({
@@ -241,6 +253,9 @@ const Schism = PriestSpell({
   applyAura: Auras.Schism,
   cast: 1.5,
   getDamage,
+  allowed(player) {
+    return Boolean(player.getTalent(Talents.Schism))
+  },
 })
 
 const Evangelism = PriestSpell({
@@ -249,6 +264,9 @@ const Evangelism = PriestSpell({
   icon: "spell_holy_divineillumination",
   targetting: Targetting.None,
   cast: 0,
+  allowed(player) {
+    return Boolean(player.getTalent(Talents.Evangelism))
+  },
   onEffect(event, es, caster) {
     for (const unit of es.friendlyUnitsIdx.values()) {
       const atonement = unit.getAura(Auras.Atonement)

@@ -25,7 +25,7 @@ import { Spells } from "../../../calc/spellsConstants"
 import { numberFormat } from "../../common/numberFormat"
 import { useDebounce } from "../../common/useDebounce"
 import { WowIcon } from "../../common/WowIcon"
-import { Profile } from "../../data/profile"
+import { Profile } from "../../../data/profile"
 
 type ResultsType = ({ type: "ok" } & CalcResult) | { type: "error"; error: any }
 

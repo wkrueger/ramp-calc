@@ -70,6 +70,7 @@ export type CombatEvent =
       id: number
       type: "aura_remove"
       aura: Auras
+      source: string
       target: string
       eventReference: number
     }
@@ -197,6 +198,9 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (!auraInfo) {
       throw Error("Aura info not found.")
     }
+    if (event.source === caster.id) {
+      caster.onEvent(event)
+    }
     const durationModifier = event.auraModifiers?.durationPct ?? 1
     if (typeof auraInfo.duration === "number") {
       const auraExpireTime = encounter.time + auraInfo.duration * durationModifier
@@ -206,6 +210,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
           id: encounter.createEventId(),
           type: "aura_remove",
           eventReference: event.id,
+          source: caster.id,
           target: target.id,
           aura: event.aura,
         },
@@ -261,12 +266,16 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
   },
   aura_remove: (event: PickFromUn<CombatEvent, "aura_remove">, encounter: EncounterState) => {
     const target = encounter.allUnitsIdx.get(event.target)
+    const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!target) {
       throw Error("Target not found")
     }
     const auraInfo = auras[event.aura]
     if (!auraInfo) {
       throw Error("Aura not found.")
+    }
+    if (caster && event.source === caster.id) {
+      caster.onEvent(event)
     }
     if (auraInfo.onExpire) {
       auraInfo.onExpire(event, encounter)

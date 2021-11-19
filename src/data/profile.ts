@@ -1,4 +1,4 @@
-import { StatRatingsIn } from "../../calc/player"
+import { StatRatingsIn } from "../calc/StatsHandler"
 import { presetsIdx } from "./presets"
 
 export const initialProfile = {
@@ -12,13 +12,7 @@ export const initialProfile = {
     versatility: 500,
   } as StatRatingsIn,
   covenant: "kyrian",
-  talents: [
-    "schism",
-    "solace",
-    "sins-of-the-many",
-    "purge-the-wicked",
-    "evangelism",
-  ],
+  talents: ["schism", "solace", "sins-of-the-many", "purge-the-wicked", "evangelism"],
   conduits: ["courageous-ascension", "exaltation", "rabid-shadows"],
   spells: presetsIdx["boon-ev"].spells,
 }

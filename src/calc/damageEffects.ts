@@ -1,7 +1,7 @@
 import type { EncounterState } from "./EncounterState"
 import { Auras } from "./aurasConstants"
 import type { CombatEvent, PickFromUn } from "./events"
-import { Player } from "./player"
+import { Player } from "./Player"
 import type { Spell } from "./spells"
 import { Spells } from "./spellsConstants"
 
