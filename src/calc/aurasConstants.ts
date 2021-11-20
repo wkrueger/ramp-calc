@@ -9,6 +9,7 @@ export enum Auras {
   DisciplineSpec = "discipline-spec",
   SinsOfTheMany = "sins-of-the-many",
   ShadowfiendAura = "shadowfiend-aura",
+  MindbenderAura = "mindbender-aura",
 }
 
 export const DURATION_INFINITE = Symbol()

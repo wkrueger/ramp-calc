@@ -85,7 +85,7 @@ export class Player {
     return this.talents[code]
   }
 
-  PET_DMG = [Spells.ShadowfiendDoT]
+  PET_DMG = [Spells.ShadowfiendDoT, Spells.MindbenderDoT]
 
   getDamageMultiplier(spell: Spells) {
     let baseMult = 1

@@ -94,7 +94,7 @@ const Schism: AuraInfo = {
   duration: 9,
   damageMultiplier: new Map(
     Object.values(Spells)
-      .filter(name => ![Spells.ShadowfiendDoT].includes(name))
+      .filter(name => ![Spells.ShadowfiendDoT, Spells.MindbenderDoT].includes(name))
       .map(name => {
         return [name, 1.25]
       })
@@ -139,6 +139,16 @@ const ShadowfiendAura: AuraInfo = {
   },
 }
 
+const MindbenderAura: AuraInfo = {
+  id: Auras.MindbenderAura,
+  duration: 12,
+  dot: {
+    spell: Spells.MindbenderDoT,
+    interval: 1.5,
+    getDoTDamage,
+  },
+}
+
 export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Pain]: Pain,
   [Auras.PurgeTheWicked]: PurgeTheWicked,
@@ -156,4 +166,5 @@ const DbCoefs: Partial<Record<Auras, { db: number }>> = {
   [Auras.Pain]: { db: 0.57528 },
   [Auras.PurgeTheWicked]: { db: 1.24 },
   [Auras.ShadowfiendAura]: { db: 4.962 },
+  [Auras.MindbenderAura]: { db: 3.2455 },
 }

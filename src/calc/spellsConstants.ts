@@ -25,4 +25,6 @@ export enum Spells {
   MindBlast = "mind-blast",
   Shadowfiend = "shadowfiend",
   ShadowfiendDoT = "shadowfiend-dot",
+  Mindbender = "mindbender",
+  MindbenderDoT = "mindbender-dot",
 }

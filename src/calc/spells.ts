@@ -392,6 +392,28 @@ const ShadowfiendDoT = PriestSpell({
   passive: true,
 })
 
+const Mindbender = PriestSpell({
+  id: Spells.Mindbender,
+  label: "Mindbender",
+  icon: "spell_shadow_soulleech_3",
+  targetting: Targetting.Enemy,
+  cast: 0,
+  cooldown: 60,
+  applyAura: Auras.MindbenderAura,
+  allowed(player) {
+    return Boolean(player.getTalent(Talents.Mindbender))
+  },
+})
+
+const MindbenderDoT = PriestSpell({
+  id: Spells.MindbenderDoT,
+  label: "Mindbender (DoT)",
+  icon: "spell_shadow_soulleech_3",
+  targetting: Targetting.Enemy,
+  cast: 0,
+  passive: true,
+})
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
@@ -418,6 +440,8 @@ export const spells: Record<string, Spell> = {
   [Spells.MindBlast]: MindBlast,
   [Spells.Shadowfiend]: Shadowfiend,
   [Spells.ShadowfiendDoT]: ShadowfiendDoT,
+  [Spells.Mindbender]: Mindbender,
+  [Spells.MindbenderDoT]: MindbenderDoT,
 }
 
 const DbCoefs: Record<string, { db: number }> = {
