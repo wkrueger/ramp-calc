@@ -23,4 +23,6 @@ export enum Spells {
   Rapture = "rapture",
   ShadowMend = "shadow-mend",
   MindBlast = "mind-blast",
+  Shadowfiend = "shadowfiend",
+  ShadowfiendDoT = "shadowfiend-dot",
 }

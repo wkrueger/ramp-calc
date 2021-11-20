@@ -1,7 +1,7 @@
 import type { EncounterState } from "./EncounterState"
 import { Auras } from "./aurasConstants"
 import { DamageEffect, triggerAtonement, triggerHealAsDamagePct } from "./damageEffects"
-import type { CombatEvent } from "./events"
+import type { CombatEvent, PickFromUn } from "./events"
 import type { Player } from "./Player"
 import { Spells } from "./spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
@@ -36,7 +36,11 @@ export interface Spell {
   passive?: boolean
   getDamage?: (this: this, stats: StatRatingsIn, player: Player) => number
   getHealing?: (stats: StatRatingsIn, caster: Player) => number
-  onEffect?: (event: CombatEvent, es: EncounterState, caster: Player) => void
+  onEffect?: (
+    event: PickFromUn<CombatEvent, "spell_cast_success">,
+    es: EncounterState,
+    caster: Player
+  ) => void
   onDamage?: Array<DamageEffect> // attaches to damage event, runs after damage calc
   allowed?: (player: Player) => boolean
 }
@@ -252,11 +256,23 @@ const Schism = PriestSpell({
   label: "Schism",
   icon: "spell_warlock_focusshadow",
   targetting: Targetting.Enemy,
-  applyAura: Auras.Schism,
+  // applyAura: Auras.Schism,
   cast: 1.5,
   getDamage,
   allowed(player) {
     return Boolean(player.getTalent(Talents.Schism))
+  },
+  onEffect(_event, es, caster) {
+    es.scheduledEvents.push({
+      time: es.time,
+      event: {
+        id: es.createEventId(),
+        type: "aura_apply",
+        aura: Auras.Schism,
+        source: caster.id,
+        target: caster.id,
+      },
+    })
   },
 })
 
@@ -354,6 +370,28 @@ const MindBlast = PriestSpell({
   },
 })
 
+const Shadowfiend = PriestSpell({
+  id: Spells.Shadowfiend,
+  label: "Shadowfiend",
+  icon: "spell_shadow_shadowfiend",
+  targetting: Targetting.Enemy,
+  cast: 0,
+  cooldown: 180,
+  applyAura: Auras.ShadowfiendAura,
+  allowed(player) {
+    return !player.getTalent(Talents.Mindbender)
+  },
+})
+
+const ShadowfiendDoT = PriestSpell({
+  id: Spells.ShadowfiendDoT,
+  label: "Shadowfiend (DoT)",
+  icon: "spell_shadow_shadowfiend",
+  targetting: Targetting.Enemy,
+  cast: 0,
+  passive: true,
+})
+
 export const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
@@ -378,6 +416,8 @@ export const spells: Record<string, Spell> = {
   [Spells.Rapture]: Rapture,
   [Spells.ShadowMend]: ShadowMend,
   [Spells.MindBlast]: MindBlast,
+  [Spells.Shadowfiend]: Shadowfiend,
+  [Spells.ShadowfiendDoT]: ShadowfiendDoT,
 }
 
 const DbCoefs: Record<string, { db: number }> = {

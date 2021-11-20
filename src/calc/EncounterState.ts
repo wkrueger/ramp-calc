@@ -179,6 +179,7 @@ export class EncounterState {
         if (!spellInfo.channel) {
           ticksInfo = [damageTime]
         } else {
+          // channel
           const nticks =
             typeof spellInfo.channel === "function"
               ? spellInfo.channel(caster).ticks

@@ -88,9 +88,17 @@ const Boon: AuraInfo = {
   },
 }
 
+// hack: apply as buff
 const Schism: AuraInfo = {
   id: Auras.Schism,
   duration: 9,
+  damageMultiplier: new Map(
+    Object.values(Spells)
+      .filter(name => ![Spells.ShadowfiendDoT].includes(name))
+      .map(name => {
+        return [name, 1.25]
+      })
+  ),
 }
 
 const Rapture: AuraInfo = {
@@ -121,6 +129,16 @@ const DisciplineSpec: AuraInfo = {
   ) as any,
 }
 
+const ShadowfiendAura: AuraInfo = {
+  id: Auras.ShadowfiendAura,
+  duration: 15,
+  dot: {
+    spell: Spells.ShadowfiendDoT,
+    interval: 1.5,
+    getDoTDamage,
+  },
+}
+
 export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Pain]: Pain,
   [Auras.PurgeTheWicked]: PurgeTheWicked,
@@ -130,9 +148,12 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.SpiritShellModifier]: SpiritShellModifier,
   [Auras.Rapture]: Rapture,
   [Auras.DisciplineSpec]: DisciplineSpec,
+  [Auras.SinsOfTheMany]: SinsOfTheMany,
+  [Auras.ShadowfiendAura]: ShadowfiendAura,
 }
 
 const DbCoefs: Partial<Record<Auras, { db: number }>> = {
   [Auras.Pain]: { db: 0.57528 },
   [Auras.PurgeTheWicked]: { db: 1.24 },
+  [Auras.ShadowfiendAura]: { db: 4.962 },
 }

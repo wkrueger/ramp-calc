@@ -1,6 +1,7 @@
-import type { EncounterState } from "./EncounterState"
 import { Aura, auras } from "./auras"
 import { Auras } from "./aurasConstants"
+import type { EncounterState } from "./EncounterState"
+import { Player } from "./Player"
 import { spells } from "./spells"
 import { Spells } from "./spellsConstants"
 
@@ -82,6 +83,12 @@ export interface EventTime {
 
 export type PickFromUn<Un, T extends string> = Un extends { type: T } ? Un : never
 
+function composeDamageMultiplier({ spell, caster }: { spell: Spells; caster: Player }) {
+  const casterMultSpell = caster.getDamageMultiplier(spell)
+
+  return (1 + caster.stats.getVersatilityPct()) * casterMultSpell
+}
+
 export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> = {
   spell_cast_start: (
     event: PickFromUn<CombatEvent, "spell_cast_start">,
@@ -133,27 +140,16 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
   dmg: (event: PickFromUn<CombatEvent, "dmg">, encounter: EncounterState) => {
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
-    const target = encounter.enemyUnitsIdx.get(event.target)!
-    let schismMultiplier = 1
-    if (target.getAura(Auras.Schism) && !event.source.startsWith("pet")) {
-      schismMultiplier = 1.25
-    }
-    const casterMultSpell = event.spell ? caster.getDamageMultiplier(event.spell) : 1
     if (event.calcValue && event.spell) {
       const spellInfo = spells[event.spell]
       if (!spellInfo) throw Error("Spell not found.")
+      const composedMult = composeDamageMultiplier({ caster, spell: event.spell })
       if (spellInfo.getDamage) {
-        const value =
-          spellInfo.getDamage(caster.stats.getStatRatings(), caster) *
-          schismMultiplier *
-          (1 + caster.stats.getVersatilityPct()) *
-          casterMultSpell
+        const value = spellInfo.getDamage(caster.stats.getStatRatings(), caster) * composedMult
         // * (1 + caster.stats.getCriticalPct())
         event.value = value
       } else if (event.value) {
-        event.value =
-          event.value * schismMultiplier * (1 + caster.stats.getVersatilityPct()) * casterMultSpell
-        // * (1 + caster.stats.getCriticalPct())
+        event.value = event.value * composedMult
       }
     }
     if (event.spell) {
@@ -196,7 +192,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     }
     const auraInfo = auras[event.aura]
     if (!auraInfo) {
-      throw Error("Aura info not found.")
+      throw Error(`Aura info not found for ${event.aura}.`)
     }
     if (event.source === caster.id) {
       caster.onEvent(event)
@@ -226,7 +222,14 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       target.addAura(aura)
       if (auraInfo.dot) {
         const hastePct = 1 + caster.stats.getHastePct()
-        const damage = auraInfo.dot.getDoTDamage(caster.stats.getStatRatings(), auraInfo) * hastePct
+        const composedMult = composeDamageMultiplier({
+          caster,
+          spell: auraInfo.dot.spell,
+        })
+        const damage =
+          auraInfo.dot.getDoTDamage(caster.stats.getStatRatings(), auraInfo) *
+          hastePct *
+          composedMult
         const interval = auraInfo.dot.interval / hastePct
         const nticks = auraInfo.duration / interval
         const dmgPerTick = damage / nticks

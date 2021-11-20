@@ -85,9 +85,12 @@ export class Player {
     return this.talents[code]
   }
 
+  PET_DMG = [Spells.ShadowfiendDoT]
+
   getDamageMultiplier(spell: Spells) {
     let baseMult = 1
-    if (this.getTalent(Talents.SinsOfTheMany)) {
+    const isPetDmg = this.PET_DMG.includes(spell)
+    if (this.getTalent(Talents.SinsOfTheMany) && !isPetDmg) {
       if (this.atonementCount <= 1) baseMult = this.SINS_DMG_MULT[1]
       else if (this.atonementCount >= 10) baseMult = this.SINS_DMG_MULT[10]
       else baseMult = (this.SINS_DMG_MULT as any)[this.atonementCount]
