@@ -4,6 +4,7 @@ import type { CombatEvent, PickFromUn } from "./events"
 import { Player } from "./Player"
 import type { Spell } from "./spells"
 import { Spells } from "./spellsConstants"
+import { Talents } from "../data/talents"
 
 interface DamageEventContext {
   caster: Player
@@ -11,11 +12,27 @@ interface DamageEventContext {
   event: PickFromUn<CombatEvent, "dmg">
 }
 
+interface HealEventContext {
+  caster: Player
+  encounter: EncounterState
+  event: PickFromUn<CombatEvent, "heal">
+}
+
 export class DamageEffect {
   trigger: (x: DamageEventContext) => void
   name: string
 
   constructor(args: { name: string; trigger: (x: DamageEventContext) => void }) {
+    this.trigger = args.trigger
+    this.name = args.name
+  }
+}
+
+export class HealEffect {
+  trigger: (x: HealEventContext) => void
+  name: string
+
+  constructor(args: { name: string; trigger: (x: HealEventContext) => void }) {
     this.trigger = args.trigger
     this.name = args.name
   }
@@ -71,3 +88,29 @@ export function triggerHealAsDamagePct({ k, spell }: { k: number; spell: Spell }
     },
   })
 }
+
+export const triggerContrition = new HealEffect({
+  name: "triggerContrition",
+  trigger({ caster, encounter, event }) {
+    if (!caster.getTalent(Talents.Contrition)) return
+    for (const unit of encounter.friendlyUnitsIdx.values()) {
+      const hasAtonement = unit.getAura(Auras.Atonement, { caster: caster.id })
+      if (hasAtonement) {
+        const spell = Spells.Contrition
+        encounter.scheduledEvents.push({
+          time: encounter.time,
+          event: {
+            type: "heal",
+            id: encounter.createEventId(),
+            source: caster.id,
+            spell,
+            target: unit.id,
+            calcValue: true,
+            value: null,
+            sourceEvent: event.id,
+          },
+        })
+      }
+    }
+  },
+})

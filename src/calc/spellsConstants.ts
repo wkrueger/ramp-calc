@@ -27,4 +27,9 @@ export enum Spells {
   ShadowfiendDoT = "shadowfiend-dot",
   Mindbender = "mindbender",
   MindbenderDoT = "mindbender-dot",
+  Contrition = "contrition",
+  DivineStarHeal = "divine-star-heal",
+  DivineStarDamage = "divine-star-damage",
+  HaloHeal = "halo-heal",
+  HaloDamage = "halo-damage",
 }

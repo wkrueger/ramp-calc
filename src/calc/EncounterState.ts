@@ -91,7 +91,17 @@ export class EncounterState {
     return []
   }
 
-  createEventsForSpell(spellId: Spells, source: string, queueNext = true) {
+  getEventsForSpell({
+    spellId,
+    source,
+    queueNext = true,
+    allowPassive = false,
+  }: {
+    spellId: Spells
+    source: string
+    allowPassive?: boolean
+    queueNext?: boolean
+  }) {
     const out = {
       // eventLog: [] as EventTime[],
       scheduledEvents: [] as { event: CombatEvent; time: number }[],
@@ -104,7 +114,7 @@ export class EncounterState {
     if (!spellInfo) {
       throw Error("Spell not found.")
     }
-    if (spellInfo.passive) {
+    if (!allowPassive && spellInfo.passive) {
       throw Error(`Spell ${spellId} is passive and cant be invoked.`)
     }
     let damageTime = this.time + (spellInfo.travelTime || 0)
@@ -242,7 +252,10 @@ export class EncounterState {
   pushNextSpell() {
     const nextSpell = this.spellsQueued.shift()
     if (!nextSpell) return null
-    const { scheduledEvents } = this.createEventsForSpell(nextSpell.spell, nextSpell.source)
+    const { scheduledEvents } = this.getEventsForSpell({
+      spellId: nextSpell.spell,
+      source: nextSpell.source,
+    })
     for (const item of scheduledEvents) {
       this.scheduledEvents.push(item)
     }

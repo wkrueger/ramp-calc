@@ -160,6 +160,7 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.DisciplineSpec]: DisciplineSpec,
   [Auras.SinsOfTheMany]: SinsOfTheMany,
   [Auras.ShadowfiendAura]: ShadowfiendAura,
+  [Auras.MindbenderAura]: MindbenderAura,
 }
 
 const DbCoefs: Partial<Record<Auras, { db: number }>> = {

@@ -11,7 +11,7 @@ export type CombatEvent =
       id: number
       type: "dmg"
       target: string
-      spell?: Spells
+      spell: Spells
       aura?: Auras
       source: string
       value: number | null
@@ -127,8 +127,8 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       const rechargeMax = Math.max(gcdEnd, recharge)
       caster.setSpellRecharge(spellInfo.id, rechargeMax)
     }
-    if (spellInfo.onEffect) {
-      spellInfo.onEffect(event, encounter, caster)
+    if (spellInfo.onCastSuccess) {
+      spellInfo.onCastSuccess(event, encounter, caster)
     }
   },
   spell_channel_finish: (
@@ -142,7 +142,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (!caster) throw Error("Caster not found.")
     if (event.calcValue && event.spell) {
       const spellInfo = spells[event.spell]
-      if (!spellInfo) throw Error("Spell not found.")
+      if (!spellInfo) throw Error(`Spell ${event.spell} not found.`)
       const composedMult = composeDamageMultiplier({ caster, spell: event.spell })
       if (spellInfo.getDamage) {
         const value = spellInfo.getDamage(caster.stats.getStatRatings(), caster) * composedMult
@@ -152,14 +152,12 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
         event.value = event.value * composedMult
       }
     }
-    if (event.spell) {
-      const spellInfo = spells[event.spell]
-      if (!spellInfo) throw Error("Spell not found.")
-      if (spellInfo.onDamage && spellInfo.onDamage.length) {
-        spellInfo.onDamage.forEach(handler => {
-          handler.trigger({ caster, event, encounter })
-        })
-      }
+    const spellInfo = spells[event.spell]
+    if (!spellInfo) throw Error("Spell not found.")
+    if (spellInfo.onDamage && spellInfo.onDamage.length) {
+      spellInfo.onDamage.forEach(handler => {
+        handler.trigger({ caster, event, encounter })
+      })
     }
   },
   heal: (event: PickFromUn<CombatEvent, "heal">, encounter: EncounterState) => {
@@ -179,6 +177,15 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (applyShell && event.value) {
       event.value = event.value * 0.8
       event.spell = Spells.SpiritShellHeal
+    }
+    const spellInfo = spells[event.spell]
+    if (!spellInfo) {
+      throw Error(`Spell ${event.spell} not found.`)
+    }
+    if (spellInfo.onHeal && spellInfo.onHeal.length) {
+      spellInfo.onHeal.forEach(handler => {
+        handler.trigger({ caster, event, encounter })
+      })
     }
   },
   aura_apply: (event: PickFromUn<CombatEvent, "aura_apply">, encounter: EncounterState) => {

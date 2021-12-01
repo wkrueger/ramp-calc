@@ -32,13 +32,13 @@ export const talents = [
     row: 1,
     icon: "spell_holy_searinglightpriest",
   },
-  {
-    id: 265259,
-    label: "Twist of Fate",
-    code: Talents.TwistOfFate,
-    row: 1,
-    icon: "spell_shadow_mindtwisting",
-  },
+  // {
+  //   id: 265259,
+  //   label: "Twist of Fate",
+  //   code: Talents.TwistOfFate,
+  //   row: 1,
+  //   icon: "spell_shadow_mindtwisting",
+  // },
   {
     id: 123040,
     label: "Mindbender",
