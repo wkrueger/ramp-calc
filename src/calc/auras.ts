@@ -24,6 +24,7 @@ export interface AuraInfo {
     getDoTDamage: (stats: StatRatingsIn, auraInfo: AuraInfo) => number
   }
   damageMultiplier?: Map<Spells, number>
+  healingMultiplier?: Map<Spells, number>
   onExpire?: (event: PickFromUn<CombatEvent, "aura_remove">, encounter: EncounterState) => void
 }
 
@@ -32,34 +33,9 @@ function getDoTDamage(stats: StatRatingsIn, auraInfo: AuraInfo) {
   return stats.intellect * coef
 }
 
-const Pain: AuraInfo = {
-  id: Auras.Pain,
-  duration: 12,
-  dot: {
-    spell: Spells.PainDoT,
-    interval: 2,
-    getDoTDamage,
-  },
-}
-
-const PurgeTheWicked: AuraInfo = {
-  id: Auras.PurgeTheWicked,
-  duration: 20,
-  dot: {
-    spell: Spells.PurgeTheWickedDoT,
-    interval: 2,
-    getDoTDamage,
-  },
-}
-
 const Atonement: AuraInfo = {
   id: Auras.Atonement,
   duration: 12,
-}
-
-const SpiritShellModifier: AuraInfo = {
-  id: Auras.SpiritShellModifier,
-  duration: 10,
 }
 
 const Boon: AuraInfo = {
@@ -88,6 +64,31 @@ const Boon: AuraInfo = {
   },
 }
 
+const Pain: AuraInfo = {
+  id: Auras.Pain,
+  duration: 12,
+  dot: {
+    spell: Spells.PainDoT,
+    interval: 2,
+    getDoTDamage,
+  },
+}
+
+const PurgeTheWicked: AuraInfo = {
+  id: Auras.PurgeTheWicked,
+  duration: 20,
+  dot: {
+    spell: Spells.PurgeTheWickedDoT,
+    interval: 2,
+    getDoTDamage,
+  },
+}
+
+const Rapture: AuraInfo = {
+  id: Auras.Rapture,
+  duration: 8,
+}
+
 // hack: apply as buff
 const Schism: AuraInfo = {
   id: Auras.Schism,
@@ -101,11 +102,24 @@ const Schism: AuraInfo = {
   ),
 }
 
-const Rapture: AuraInfo = {
-  id: Auras.Rapture,
-  duration: 8,
+const ShadowCovenant: AuraInfo = {
+  id: Auras.ShadowCovenant,
+  duration: 7,
+  damageMultiplier: new Map([
+    [Spells.MindBlast, 1.25],
+    [Spells.Pain, 1.25],
+    [Spells.PainDoT, 1.25],
+    [Spells.PurgeTheWicked, 1, 25],
+    [Spells.PurgeTheWickedDoT, 1.25],
+    [Spells.Schism, 1.25],
+  ] as any),
+  healingMultiplier: new Map([[Spells.ShadowMend, 1.25]] as any),
 }
 
+const SpiritShellModifier: AuraInfo = {
+  id: Auras.SpiritShellModifier,
+  duration: 10,
+}
 const SinsOfTheMany: AuraInfo = {
   id: Auras.SinsOfTheMany,
   duration: DURATION_INFINITE,
@@ -125,7 +139,7 @@ const DisciplineSpec: AuraInfo = {
       [Spells.MindBlast]: 0.76,
       [Spells.PainDoT]: 1.01,
       [Spells.PurgeTheWickedDoT]: 0.94,
-    } as Record<Spells, number>)
+    })
   ) as any,
 }
 
@@ -159,6 +173,7 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Rapture]: Rapture,
   [Auras.DisciplineSpec]: DisciplineSpec,
   [Auras.SinsOfTheMany]: SinsOfTheMany,
+  [Auras.ShadowCovenant]: ShadowCovenant,
   [Auras.ShadowfiendAura]: ShadowfiendAura,
   [Auras.MindbenderAura]: MindbenderAura,
 }

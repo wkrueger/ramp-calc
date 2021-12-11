@@ -2,6 +2,7 @@ import { TalentInfo, Talents, talentsIdx } from "../data/talents"
 import { Aura, auras } from "./auras"
 import { Auras } from "./aurasConstants"
 import type { CombatEvent } from "./events"
+import type { Spell } from "./spells"
 import { Spells } from "./spellsConstants"
 import { StatRatingsIn, StatsHandler } from "./StatsHandler"
 
@@ -10,6 +11,14 @@ import { StatRatingsIn, StatsHandler } from "./StatsHandler"
 //   | { type: "casting"; spell: Spells; start: number; end: number }
 //   | { type: "gcd"; start: number; end: number }
 
+const ShadowCovenantSpells = new Set([
+  Spells.MindBlast,
+  Spells.Pain,
+  Spells.PurgeTheWicked,
+  Spells.Schism,
+  Spells.ShadowMend,
+])
+
 export class Player {
   id: string
   stats: StatsHandler
@@ -17,6 +26,7 @@ export class Player {
   private talents: Partial<Record<Talents, TalentInfo>> = {}
   protected recharges = new Map<Spells, number>()
   private damageMultAurasBySpell: Map<Spells, Map<Auras, number>>
+  private healingMultAurasBySpell: Map<Spells, Map<Auras, number>>
   private atonementCount = 0
 
   SINS_DMG_MULT = {
@@ -36,6 +46,7 @@ export class Player {
     this.id = args.id
     this.stats = new StatsHandler({ ratings: args.statRatings })
     this.damageMultAurasBySpell = new Map()
+    this.healingMultAurasBySpell = new Map()
     for (let talent of args.talents || []) {
       const obj = talentsIdx[talent]
       this.talents[talent] = obj
@@ -64,6 +75,16 @@ export class Player {
         found.set(aura.id, value)
       }
     }
+    if (info?.healingMultiplier) {
+      for (let [spell, value] of info.healingMultiplier.entries()) {
+        let found = this.healingMultAurasBySpell.get(spell)
+        if (!found) {
+          found = new Map()
+          this.healingMultAurasBySpell.set(spell, found)
+        }
+        found.set(aura.id, value)
+      }
+    }
   }
 
   removeAura({ eventReference }: { eventReference: number }) {
@@ -76,6 +97,11 @@ export class Player {
     if (info?.damageMultiplier) {
       for (let spell of info.damageMultiplier.keys()) {
         this.damageMultAurasBySpell.get(spell)?.delete(aura.id)
+      }
+    }
+    if (info?.healingMultiplier) {
+      for (let spell of info.healingMultiplier.keys()) {
+        this.healingMultAurasBySpell.get(spell)?.delete(aura.id)
       }
     }
     this.auras.splice(index, 1)
@@ -104,14 +130,26 @@ export class Player {
     return out
   }
 
+  getHealingMultiplier(spell: Spells) {
+    let baseMult = 1
+    const found = this.healingMultAurasBySpell.get(spell)
+    if (!found) return baseMult
+    let out = baseMult
+    for (let mult of found.values()) {
+      out = out * mult
+    }
+    return out
+  }
+
   canCastSpell(args: { time: number; spell: Spells }) {
     const found = this.recharges.get(args.spell)
     if (!found) return true
     return args.time >= found
   }
 
-  setSpellRecharge(spell: Spells, time: number) {
-    this.recharges.set(spell, time)
+  setSpellRecharge(spellInfo: Spell, time: number) {
+    if (spellInfo.passive) return
+    this.recharges.set(spellInfo.id, time)
   }
 
   onEvent(event: CombatEvent) {
@@ -121,6 +159,16 @@ export class Player {
     } else if (event.type === "aura_remove" && event.aura === Auras.Atonement) {
       this.atonementCount--
     }
+  }
+
+  spellIsAllowed(info: Spell) {
+    if (this.auras.some(a => a.id === Auras.ShadowCovenant)) {
+      if (!ShadowCovenantSpells.has(info.id)) return false
+    }
+    if (info.allowed) {
+      return info.allowed(this)
+    }
+    return true
   }
 }
 

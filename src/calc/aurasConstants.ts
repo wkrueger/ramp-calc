@@ -9,6 +9,7 @@ export enum Auras {
   DisciplineSpec = "discipline-spec",
   SinsOfTheMany = "sins-of-the-many",
   ShadowfiendAura = "shadowfiend-aura",
+  ShadowCovenant = "shadow-covenant",
   MindbenderAura = "mindbender-aura",
 }
 

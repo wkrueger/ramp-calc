@@ -22,6 +22,7 @@ export enum Targetting {
 
 export interface Spell {
   id: Spells
+  gameId?: number
   label: string
   cast: number
   icon: string
@@ -98,6 +99,7 @@ const PainDoT = PriestSpell({
 
 const PurgeTheWicked = PriestSpell({
   id: Spells.PurgeTheWicked,
+  gameId: 204197,
   label: "Purge the Wicked",
   icon: "ability_mage_firestarter",
   targetting: Targetting.Enemy,
@@ -397,6 +399,43 @@ const MindBlast = PriestSpell({
   },
 })
 
+const ShadowCovenant = PriestSpell({
+  id: Spells.ShadowCovenant,
+  label: "Shadow Covenant",
+  icon: "spell_shadow_summonvoidwalker",
+  cast: 0,
+  cooldown: 30,
+  targetting: Targetting.Friendly,
+  allowed(player) {
+    return Boolean(player.getTalent(Talents.ShadowCovenant))
+  },
+  getHealing(stats) {
+    return 1.65 * stats.intellect
+  },
+  targetCount: 5,
+  onCastSuccess(event, es, caster) {
+    const toQueue = es.getEventsForSpell({
+      source: caster.id,
+      spellId: Spells.ShadowCovenantApplyAura,
+      allowPassive: true,
+      queueNext: false,
+    })
+    for (let each of toQueue.scheduledEvents) {
+      es.scheduledEvents.push(each)
+    }
+  },
+})
+
+const ShadowCovenantApplyAura = PriestSpell({
+  id: Spells.ShadowCovenantApplyAura,
+  label: "Shadow Covenant (apply aura)",
+  cast: 0,
+  icon: "spell_shadow_summonvoidwalker",
+  targetting: Targetting.Self,
+  passive: true,
+  applyAura: Auras.ShadowCovenant,
+})
+
 const Shadowfiend = PriestSpell({
   id: Spells.Shadowfiend,
   label: "Shadowfiend",
@@ -453,30 +492,60 @@ const Contrition = PriestSpell({
   },
 })
 
-const DivineStarHeal = PriestSpell({
-  id: Spells.DivineStarHeal,
+const DivineStarActivate = PriestSpell({
+  id: Spells.DivineStarActivate,
   label: "Divine Star",
   icon: "spell_priest_divinestar",
   targetting: Targetting.Friendly,
-  targetCount: 6,
   cast: 0,
-  travelTime: 0.5,
   allowed(player) {
     return Boolean(player.getTalent(Talents.DivineStar))
   },
-  getHealing(stats) {
-    return stats.intellect * DbCoefs[Spells.DivineStarHeal].db
-  },
   onCastSuccess(ev, es) {
-    const { scheduledEvents } = es.getEventsForSpell({
+    const { scheduledEvents: sch0 } = es.getEventsForSpell({
+      spellId: Spells.DivineStarHeal,
+      source: ev.source,
+      allowPassive: true,
+      queueNext: false,
+    })
+    const { scheduledEvents: sch1 } = es.getEventsForSpell({
       spellId: Spells.DivineStarDamage,
       source: ev.source,
       allowPassive: true,
       queueNext: false,
     })
+    const { scheduledEvents: sch2 } = es.getEventsForSpell({
+      spellId: Spells.DivineStarHeal,
+      source: ev.source,
+      allowPassive: true,
+      queueNext: false,
+      time: es.time + 0.5,
+    })
+    const { scheduledEvents: sch3 } = es.getEventsForSpell({
+      spellId: Spells.DivineStarDamage,
+      source: ev.source,
+      allowPassive: true,
+      queueNext: false,
+      time: es.time + 0.5,
+    })
+    const scheduledEvents = [...sch0, ...sch1, ...sch2, ...sch3]
     scheduledEvents.forEach(toSet => {
       es.scheduledEvents.push(toSet)
     })
+  },
+})
+
+const DivineStarHeal = PriestSpell({
+  id: Spells.DivineStarHeal,
+  label: "Divine Star (Heal)",
+  icon: "spell_priest_divinestar",
+  targetting: Targetting.Friendly,
+  passive: true,
+  targetCount: 6,
+  cast: 0,
+  travelTime: 0.5,
+  getHealing(stats) {
+    return stats.intellect * DbCoefs[Spells.DivineStarHeal].db
   },
 })
 
@@ -487,6 +556,7 @@ const DivineStarDamage = PriestSpell({
   targetting: Targetting.Enemy,
   cast: 0,
   travelTime: 0.5,
+  targetCount: 6,
   passive: true,
   getDamage(stats) {
     return stats.intellect * DbCoefs[Spells.DivineStarDamage].db
@@ -555,11 +625,14 @@ export const spells: Record<string, Spell> = {
   [Spells.Rapture]: Rapture,
   [Spells.ShadowMend]: ShadowMend,
   [Spells.MindBlast]: MindBlast,
+  [Spells.ShadowCovenant]: ShadowCovenant,
+  [Spells.ShadowCovenantApplyAura]: ShadowCovenantApplyAura,
   [Spells.Shadowfiend]: Shadowfiend,
   [Spells.ShadowfiendDoT]: ShadowfiendDoT,
   [Spells.Mindbender]: Mindbender,
   [Spells.MindbenderDoT]: MindbenderDoT,
   [Spells.Contrition]: Contrition,
+  [Spells.DivineStarActivate]: DivineStarActivate,
   [Spells.DivineStarHeal]: DivineStarHeal,
   [Spells.DivineStarDamage]: DivineStarDamage,
   [Spells.HaloHeal]: HaloHeal,
@@ -582,4 +655,5 @@ const DbCoefs: Record<string, { db: number }> = {
   [Spells.DivineStarDamage]: { db: 0.56 },
   [Spells.HaloHeal]: { db: 1.15 },
   [Spells.HaloDamage]: { db: 1.03 },
+  [Spells.ShadowCovenant]: { db: 1.65 },
 }

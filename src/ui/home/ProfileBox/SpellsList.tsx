@@ -104,7 +104,7 @@ export function SpellsList({
   )
 
   return (
-    <Flex direction="column" className="box" sx={containerStyles}>
+    <Flex direction="column" className="box" sx={containerStyles} flexGrow={1}>
       <Box width="100%" position="relative" className="heading-group">
         <Heading size="sm" as="h3">
           Spells

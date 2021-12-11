@@ -85,8 +85,13 @@ export type PickFromUn<Un, T extends string> = Un extends { type: T } ? Un : nev
 
 function composeDamageMultiplier({ spell, caster }: { spell: Spells; caster: Player }) {
   const casterMultSpell = caster.getDamageMultiplier(spell)
-
   return (1 + caster.stats.getVersatilityPct()) * casterMultSpell
+}
+
+function composeHealingMultiplier({ spell, caster }: { spell: Spells; caster: Player }) {
+  const casterMultSpell = caster.getHealingMultiplier(spell)
+  const vers = spell === Spells.Atonement ? 0 : caster.stats.getVersatilityPct()
+  return (1 + vers) * casterMultSpell
 }
 
 export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> = {
@@ -113,10 +118,8 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
     const spellInfo = spells[event.spell]
-    if (spellInfo.allowed) {
-      const isAllowed = spellInfo.allowed(caster)
-      if (!isAllowed) throw Error(`Spell ${event.spell} not allowed now.`)
-    }
+    const isAllowed = caster.spellIsAllowed(spellInfo)
+    if (!isAllowed) throw Error(`Spell ${event.spell} not allowed now.`)
     if (!spellInfo.cast) {
       if (!caster.canCastSpell({ time: encounter.time, spell: spellInfo.id })) {
         throw Error(`Spell ${spellInfo.id} on recharge.`)
@@ -125,7 +128,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       const gcdEnd = encounter.time + computedCast
       const recharge = (spellInfo.cooldown || 0) / (1 + caster.stats.getHastePct())
       const rechargeMax = Math.max(gcdEnd, recharge)
-      caster.setSpellRecharge(spellInfo.id, rechargeMax)
+      caster.setSpellRecharge(spellInfo, rechargeMax)
     }
     if (spellInfo.onCastSuccess) {
       spellInfo.onCastSuccess(event, encounter, caster)
@@ -163,24 +166,16 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
   heal: (event: PickFromUn<CombatEvent, "heal">, encounter: EncounterState) => {
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
-    if (event.calcValue && event.spell) {
-      const spellInfo = spells[event.spell]
-      if (!spellInfo) throw Error("Spell not found.")
-      if (spellInfo.getHealing) {
-        const value = spellInfo.getHealing(caster.stats.getStatRatings(), caster)
-        event.value = value
-      }
-    }
-    const applyShell =
-      [Spells.PenanceFriendly, Spells.Radiance].includes(event.spell) &&
-      Boolean(caster.getAura(Auras.SpiritShellModifier))
-    if (applyShell && event.value) {
-      event.value = event.value * 0.8
-      event.spell = Spells.SpiritShellHeal
-    }
     const spellInfo = spells[event.spell]
     if (!spellInfo) {
       throw Error(`Spell ${event.spell} not found.`)
+    }
+    if (event.calcValue) {
+      if (spellInfo.getHealing) {
+        const value = spellInfo.getHealing(caster.stats.getStatRatings(), caster)
+        const mult = composeHealingMultiplier({ spell: spellInfo.id, caster })
+        event.value = value * mult
+      }
     }
     if (spellInfo.onHeal && spellInfo.onHeal.length) {
       spellInfo.onHeal.forEach(handler => {

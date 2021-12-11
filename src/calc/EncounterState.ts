@@ -94,11 +94,13 @@ export class EncounterState {
   getEventsForSpell({
     spellId,
     source,
+    time = this.time,
     queueNext = true,
     allowPassive = false,
   }: {
     spellId: Spells
     source: string
+    time?: number
     allowPassive?: boolean
     queueNext?: boolean
   }) {
@@ -117,11 +119,11 @@ export class EncounterState {
     if (!allowPassive && spellInfo.passive) {
       throw Error(`Spell ${spellId} is passive and cant be invoked.`)
     }
-    let damageTime = this.time + (spellInfo.travelTime || 0)
+    let damageTime = time + (spellInfo.travelTime || 0)
     const currentTargets = this.getSpellTarget(spellInfo, caster.id).map(t => t!.id)
     const computedCast = spellInfo.cast / (1 + caster.stats.getHastePct())
     if (spellInfo.cast) {
-      const castEnd = this.time + computedCast
+      const castEnd = time + computedCast
       damageTime = castEnd + (spellInfo.travelTime || 0)
       const currentTarget = currentTargets[0]
       const { startEvent, endEvent } = spellInfo.channel
@@ -131,7 +133,7 @@ export class EncounterState {
           }
         : { startEvent: "spell_cast_start", endEvent: "spell_cast_success" }
       out.scheduledEvents.push({
-        time: this.time,
+        time: time,
         event: {
           id: this.createEventId(),
           type: startEvent as any,
@@ -163,7 +165,7 @@ export class EncounterState {
     }
     if (!spellInfo.cast) {
       out.scheduledEvents.push({
-        time: this.time,
+        time: time,
         event: {
           id: this.createEventId(),
           type: "spell_cast_success",
@@ -175,7 +177,7 @@ export class EncounterState {
       const computedGCD = (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
       if (queueNext) {
         out.scheduledEvents.push({
-          time: this.time + computedGCD,
+          time: time + computedGCD,
           event: {
             id: this.createEventId(),
             type: "_queuenext",
@@ -196,7 +198,7 @@ export class EncounterState {
               : spellInfo.channel.ticks
           const tickTime = computedCast / (nticks - 1)
           ticksInfo = Array.from({ length: nticks }, (_, index) => {
-            return this.time + index * tickTime + (spellInfo.travelTime || 0)
+            return time + index * tickTime + (spellInfo.travelTime || 0)
           })
         }
         ticksInfo.forEach(eachTick => {

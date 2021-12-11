@@ -2,7 +2,7 @@ import { Flex, Heading, SimpleGrid, Stack } from "@chakra-ui/layout"
 import clsx from "clsx"
 import React, { useCallback, useMemo } from "react"
 import { BasicEvent, createEvent } from "../../common/event"
-import { talents, talentsByRow, talentsIdx } from "../../../data/talents"
+import { talentsByRow, talentsIdx } from "../../../data/talents"
 import { WowIcon } from "../../common/WowIcon"
 import _keyBy from "lodash/keyBy"
 
