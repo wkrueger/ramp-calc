@@ -3,7 +3,7 @@ import immer from "immer"
 import React, { useCallback, useEffect, useState } from "react"
 import { initialProfile, Profile } from "../../data/profile"
 import useThrottle from "../common/useThrottle"
-import { WithIndexSetter } from "../common/WIthIndexSetter"
+import { IndexSetter, WithIndexSetter } from "../common/WIthIndexSetter"
 import { ProfileBox } from "./ProfileBox/ProfileBox"
 
 export function Home() {
@@ -32,10 +32,11 @@ export function Home() {
     console.log("saved root")
   }, [rootThrottle])
 
-  const setProfileAtIndex = useCallback((updatedProfile: Profile, index: number) => {
+  const setProfileAtIndex: IndexSetter<any> = useCallback((index: number, getNewValue) => {
     setRoot(prevRoot => {
+      const newValue = getNewValue(prevRoot.profiles[index])
       return immer(prevRoot, draft => {
-        draft.profiles[index] = updatedProfile
+        draft.profiles[index] = newValue
       })
     })
   }, [])
@@ -58,8 +59,8 @@ export function Home() {
               index={idx}
               setter={setProfileAtIndex}
               value={profile}
-              setterKey="setProfile"
-              valueKey="profile"
+              setterProp="setProfile"
+              valueProp="profile"
             />
           )
         })}
