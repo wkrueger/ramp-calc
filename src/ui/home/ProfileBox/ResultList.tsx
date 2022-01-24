@@ -17,9 +17,10 @@ import {
   Thead,
   Tr,
   useDisclosure,
+  useWhyDidYouUpdate,
 } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
-import { CalcResult, getHealing } from "../../../calc"
+import { CalcResult, getEncounterState, getHealing } from "../../../calc"
 import { EventTime } from "../../../calc/events"
 import { Spells } from "../../../calc/spellsConstants"
 import { Profile } from "../../../data/profile"
@@ -66,17 +67,33 @@ function mergeEvents(lines: EventTime[]) {
   return out
 }
 
-export function ResultList({ profile }: { profile: Profile }) {
+export function ResultList({
+  profile,
+  setProfile,
+}: {
+  profile: Profile
+  setProfile: (cb: (p: Profile) => Profile) => any
+}) {
   const logModal = useDisclosure()
   const throttledProfile = useDebounce(profile, 500)
   const [doMerge, setMerge] = useState(true)
   const [results, setResults] = useState(null as null | ResultsType)
+
   useEffect(() => {
     try {
-      let calc = getHealing({
-        spells: throttledProfile.spells as Spells[],
+      const state = getEncounterState({
         playerStatRatings: throttledProfile.stats,
         talents: throttledProfile.talents,
+      })
+      setProfile(profile => {
+        return {
+          ...profile,
+          availableSpells: state.getAvailableSpells().map(x => x.id),
+        }
+      })
+      const calc = getHealing({
+        state,
+        spellsQueued: throttledProfile.spells as Spells[],
       })
       if (doMerge) {
         calc.log = mergeEvents(calc.log)
@@ -87,7 +104,14 @@ export function ResultList({ profile }: { profile: Profile }) {
       console.error("calc err", err)
       setResults({ type: "error" as const, error: err })
     }
-  }, [doMerge, throttledProfile.spells, throttledProfile.stats, throttledProfile.talents])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    doMerge,
+    // setProfile, // assume this is up-to-date
+    throttledProfile.spells,
+    throttledProfile.stats,
+    throttledProfile.talents,
+  ])
 
   const content = results ? (
     <>

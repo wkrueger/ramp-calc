@@ -1,23 +1,22 @@
 import { Heading, SimpleGrid, Stack } from "@chakra-ui/layout"
-import React from "react"
+import React, { memo, useMemo } from "react"
 import { Spell, spells } from "../../../calc/spells"
+import { Spells } from "../../../calc/spellsConstants"
 import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon"
 
-const spellsList = Object.values(spells)
-  .filter(x => !x.passive)
-  .sort((a, b) => {
-    if (a.label > b.label) return 1
-    if (b.label > a.label) return -1
-    return 0
-  })
-
-export function SpellsBox({
+export function SpellsBox_({
+  availableSpells,
   className,
   onSelect,
 }: {
+  availableSpells: Spells[]
   className?: string
   onSelect: (spell: Spell) => any
 }) {
+  const spellsList = availableSpells.map(code => {
+    return spells[code]
+  })
+
   return (
     <Stack className={className}>
       <Heading size="sm" as="h3">
@@ -42,3 +41,5 @@ export function SpellsBox({
     </Stack>
   )
 }
+
+export const SpellsBox = memo(SpellsBox_)

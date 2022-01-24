@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react"
 import immer from "immer"
 import _set from "lodash/set"
-import React, { useCallback, useMemo } from "react"
+import React, { memo, useCallback, useMemo } from "react"
 import { BasicEvent } from "../../common/event"
 import { usePopupState } from "../../common/usePopupState"
 import { conduitsIdx } from "../../../data/conduits"
@@ -58,7 +58,7 @@ const containerStyles: CSSObject = {
   },
 }
 
-export function ProfileBox({
+function ProfileBoxRaw({
   profile,
   setProfile,
 }: {
@@ -247,6 +247,7 @@ export function ProfileBox({
           </PopoverContent>
         </Popover>
 
+        {/* last column */}
         <Flex
           direction="column"
           flexGrow={1}
@@ -258,9 +259,11 @@ export function ProfileBox({
           {/* spells */}
           <SpellsList profile={profile} setProfile={setProfile} />
           {/* result */}
-          <ResultList profile={profile} />
+          <ResultList profile={profile} setProfile={setProfile} />
         </Flex>
       </Flex>
     </Flex>
   )
 }
+
+export const ProfileBox = memo(ProfileBoxRaw)

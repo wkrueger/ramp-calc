@@ -1,6 +1,7 @@
 import { Talents } from "../data/talents"
 import { EncounterState } from "./EncounterState"
 import { EventLog } from "./EventLog"
+import { spells } from "./spells"
 import { Spells } from "./spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 
@@ -17,14 +18,24 @@ export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
 
 export type CalcResult = ReturnType<typeof getHealing>
 
-export function getHealing(p: {
-  spells: Spells[]
-  playerStatRatings: StatRatingsIn
-  talents: Talents[]
-}) {
+export function getEncounterState(p: { playerStatRatings: StatRatingsIn; talents: Talents[] }) {
   const state = new EncounterState({ playerStatRatings: p.playerStatRatings, talents: p.talents })
-  state.queueSequence("0", p.spells)
+  return state
+}
+
+export function getHealing({
+  state,
+  spellsQueued,
+}: {
+  state: EncounterState
+  spellsQueued: Spells[]
+}) {
+  state.queueSequence("0", spellsQueued)
   state.run()
   const healing = reduceEvents({ log: state.eventLog, type: "heal" })
-  return { healing, time: state.time, log: state.eventLog.log }
+  return {
+    healing,
+    time: state.time,
+    log: state.eventLog.log,
+  }
 }

@@ -1,12 +1,10 @@
 import { Badge, Center, Container, Divider, Heading, Stack } from "@chakra-ui/react"
-import React, { memo, useCallback, useEffect, useState } from "react"
 import immer from "immer"
-import { WithIndexSetter } from "../common/WIthIndexSetter"
-import { ProfileBox } from "./ProfileBox/ProfileBox"
+import React, { useCallback, useEffect, useState } from "react"
 import { initialProfile, Profile } from "../../data/profile"
 import useThrottle from "../common/useThrottle"
-
-const ProfileMemo = memo(ProfileBox)
+import { WithIndexSetter } from "../common/WIthIndexSetter"
+import { ProfileBox } from "./ProfileBox/ProfileBox"
 
 export function Home() {
   const [root, setRoot] = useState({
@@ -56,7 +54,7 @@ export function Home() {
           return (
             <WithIndexSetter
               key={profile.id}
-              Component={ProfileMemo}
+              Component={ProfileBox}
               index={idx}
               setter={setProfileAtIndex}
               value={profile}

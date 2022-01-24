@@ -1,6 +1,7 @@
 import { StatRatingsIn } from "../calc/StatsHandler"
 import { presetsIdx } from "./presets"
 import { Talents } from "./talents"
+import { spells } from "../calc/spells"
 
 export const initialProfile = {
   id: 1,
@@ -22,6 +23,14 @@ export const initialProfile = {
   ] as Talents[],
   conduits: ["courageous-ascension", "exaltation", "rabid-shadows"],
   spells: presetsIdx["boon-ev"].spells,
+  availableSpells: Object.values(spells)
+    .filter(x => !x.passive)
+    .sort((a, b) => {
+      if (a.label > b.label) return 1
+      if (b.label > a.label) return -1
+      return 0
+    })
+    .map(spell => spell.id),
 }
 
 export type Profile = typeof initialProfile

@@ -286,4 +286,22 @@ export class EncounterState {
       currentEvent = this.scheduledEvents.shift()
     }
   }
+
+  getAvailableSpells() {
+    const availableSpells = Object.values(spells)
+      .filter(spell => {
+        if (spell.passive) return false
+        const player = this.friendlyUnitsIdx.get("0")!
+        if (spell.allowed) {
+          return spell.allowed(player)
+        }
+        return true
+      })
+      .sort((a, b) => {
+        if (a.label > b.label) return 1
+        if (b.label > a.label) return -1
+        return 0
+      })
+    return availableSpells
+  }
 }

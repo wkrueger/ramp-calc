@@ -178,7 +178,11 @@ export function SpellsList({
           <PopoverContent width="unset">
             <PopoverArrow />
             <PopoverBody>
-              <SpellsBox className="popover-dialog" onSelect={handleSpellSelect} />
+              <SpellsBox
+                availableSpells={profile.availableSpells}
+                className="popover-dialog"
+                onSelect={handleSpellSelect}
+              />
             </PopoverBody>
           </PopoverContent>
         </Popover>
