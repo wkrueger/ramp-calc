@@ -65,6 +65,7 @@ export type CombatEvent =
       target: string
       auraModifiers?: {
         durationPct?: number // radiance
+        durationSec?: number
       }
     }
   | {
@@ -200,8 +201,9 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       caster.onEvent(event)
     }
     const durationModifier = event.auraModifiers?.durationPct ?? 1
+    const durationModSec = event.auraModifiers?.durationSec || 0
     if (typeof auraInfo.duration === "number") {
-      const auraExpireTime = encounter.time + auraInfo.duration * durationModifier
+      const auraExpireTime = encounter.time + auraInfo.duration * durationModifier + durationModSec
       const link = encounter.scheduledEvents.push({
         time: auraExpireTime,
         event: {

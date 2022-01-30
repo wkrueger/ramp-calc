@@ -12,6 +12,7 @@ import type { Player } from "./Player"
 import { Spells } from "./spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 import { Talents } from "../data/talents"
+import { MultCalc } from "./utl/conduitScale"
 
 export enum Targetting {
   Self,
@@ -125,6 +126,15 @@ const PurgeTheWickedDoT = PriestSpell({
   cast: 0,
 })
 
+const exaltationMult = new MultCalc({
+  200: 7,
+  213: 7.5,
+  226: 8,
+  239: 8.5,
+  252: 9,
+  265: 9.5,
+  278: 10,
+})
 const Shield = PriestSpell({
   id: Spells.Shield,
   label: "Power Word: Shield",
@@ -133,7 +143,15 @@ const Shield = PriestSpell({
   applyAura: Auras.Atonement,
   cast: 0,
   getHealing({ intellect }, caster) {
-    const raptureMod = caster.getAura(Auras.Rapture) ? 2 : 1
+    const hasRapture = caster.getAura(Auras.Rapture)
+    let raptureMod = caster.getAura(Auras.Rapture) ? 2 : 1
+    if (hasRapture) {
+      const hasExaltation = caster.getAura(Auras.Exaltation)
+      if (hasExaltation) {
+        const value = exaltationMult.calc(hasExaltation.level!) * 1.5
+        raptureMod += value / 100
+      }
+    }
     return 1.65 * intellect * raptureMod
   },
 })
@@ -331,9 +349,28 @@ const SpiritShellActivate = PriestSpell({
   icon: "ability_shaman_astralshift",
   targetting: Targetting.Self,
   cast: 0,
-  applyAura: Auras.SpiritShellModifier,
+  // applyAura: Auras.SpiritShellModifier,
   allowed(player) {
     return Boolean(player.getTalent(Talents.SpiritShell))
+  },
+  onCastSuccess(ev, es, caster) {
+    const hasExaltation = caster.getAura(Auras.Exaltation)
+    const modifiers = hasExaltation ? { durationSec: 1 } : undefined
+
+    const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
+    for (const currentTarget of currentTargets) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_apply",
+          aura: Auras.SpiritShellModifier,
+          source: caster.id,
+          target: currentTarget,
+          auraModifiers: modifiers,
+        },
+      })
+    }
   },
 })
 
@@ -386,9 +423,27 @@ const Rapture = PriestSpell({
   icon: "spell_holy_rapture",
   targetting: Targetting.Self,
   cast: 0,
-  applyAura: Auras.Rapture,
+  // applyAura: Auras.Rapture,
   cooldown: 90,
   onCastSuccess(ev, es, caster) {
+    const hasExaltation = caster.getAura(Auras.Exaltation)
+    const modifiers = hasExaltation ? { durationSec: 1 } : undefined
+
+    const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
+    for (const currentTarget of currentTargets) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_apply",
+          aura: Auras.Rapture,
+          source: caster.id,
+          target: currentTarget,
+          auraModifiers: modifiers,
+        },
+      })
+    }
+
     const events = es.getEventsForSpell({
       spellId: Spells.Shield,
       source: caster.id,

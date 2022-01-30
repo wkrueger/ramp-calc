@@ -1,5 +1,4 @@
 import {
-  Button,
   CSSObject,
   Editable,
   EditableInput,
@@ -13,25 +12,24 @@ import {
   PopoverBody,
   PopoverContent,
   PopoverTrigger,
-  Spacer,
   Stack,
   Text,
 } from "@chakra-ui/react"
 import immer from "immer"
 import _set from "lodash/set"
 import React, { memo, useCallback, useMemo } from "react"
-import { BasicEvent } from "../common/event"
-import { usePopupState } from "../common/usePopupState"
 import { conduitsIdx } from "../../data/conduits"
 import { covenants } from "../../data/covenants"
 import { Profile } from "../../data/profile"
 import { talentsIdx } from "../../data/talents"
+import { BasicEvent } from "../common/event"
+import { usePopupState } from "../common/usePopupState"
 import { WowIcon } from "../common/WowIcon"
 import { ConduitBox } from "./ConduitBox"
 import { CovenantBox } from "./CovenantBox"
+import { ResultList } from "./ResultList"
 import { SpellsList } from "./SpellsList"
 import { TalentBox } from "./TalentBox"
-import { ResultList } from "./ResultList"
 
 export const STATS_INFO = [
   { label: "Intellect", code: "intellect" },
@@ -108,9 +106,9 @@ function ProfileBox_({
             <EditableInput />
           </Editable>
         </Heading>
-        <Spacer />
+        {/* <Spacer />
         <Button ml={2}>Load from SIMC...</Button>
-        <Button ml={2}>Inspect/replace gear...</Button>
+        <Button ml={2}>Inspect/replace gear...</Button> */}
       </Flex>
       <Flex className="profile-2nd-row" width="100%" pt={4} spacing={8} sx={containerStyles}>
         {/* stats */}
