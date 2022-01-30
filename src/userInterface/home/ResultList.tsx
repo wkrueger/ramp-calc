@@ -108,10 +108,12 @@ export function ResultList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     doMerge,
-    // setProfile, // assume this is up-to-date
+    setProfile,
     throttledProfile.spells,
     throttledProfile.stats,
     throttledProfile.talents,
+    throttledProfile.conduits,
+    // fixme: if I pass root profile it infinite loops
   ])
 
   const content = results ? (
@@ -207,8 +209,4 @@ export function ResultList({
 
 function getName(et: EventTime) {
   return (et.event as any).spell || (et.event as any).aura || ""
-}
-
-function getSource(et: EventTime) {
-  return (et.event as any).source || ""
 }

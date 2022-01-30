@@ -51,6 +51,11 @@ export interface Spell {
   onDamage?: Array<DamageEffect> // attaches to damage event, runs after damage calc
   onHeal?: Array<HealEffect>
   allowed?: (player: Player) => boolean
+  /*
+   *  In case the "allowed" function changes with time, define an extra "allowedStatic"
+   *  which will use used instead of "allowed" for the UI.
+   */
+  allowedStatic?: (player: Player) => boolean
 }
 
 function PriestSpell(spell: Spell): Spell {
@@ -208,6 +213,9 @@ const AscendedBlast = PriestSpell({
   targetting: Targetting.Enemy,
   cast: 0,
   travelTime: 0.3,
+  allowedStatic() {
+    return true
+  },
   allowed(player) {
     return Boolean(player.getAura(Auras.Boon))
   },
@@ -236,6 +244,9 @@ const AscendedNova = PriestSpell({
   targetting: Targetting.Enemy,
   cast: 0,
   gcd: 0.75,
+  allowedStatic() {
+    return true
+  },
   allowed(player) {
     return Boolean(player.getAura(Auras.Boon))
   },
@@ -268,7 +279,6 @@ const Schism = PriestSpell({
   label: "Schism",
   icon: "spell_warlock_focusshadow",
   targetting: Targetting.Enemy,
-  // applyAura: Auras.Schism,
   cast: 1.5,
   getDamage,
   allowed(player) {

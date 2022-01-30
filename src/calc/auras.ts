@@ -1,5 +1,6 @@
-import type { EncounterState } from "./EncounterState"
 import { Auras, DURATION_INFINITE } from "./aurasConstants"
+import { conduits } from "./conduits"
+import type { EncounterState } from "./EncounterState"
 import type { CombatEvent, PickFromUn } from "./events"
 import type { Link } from "./ScheduledEvents"
 import { Spells } from "./spellsConstants"
@@ -131,19 +132,20 @@ const SinsOfTheMany: AuraInfo = {
 const DisciplineSpec: AuraInfo = {
   id: Auras.DisciplineSpec,
   duration: DURATION_INFINITE,
-  damageMultiplier: new Map(
-    Object.entries({
-      [Spells.Smite]: 0.7 * 1.5,
-      [Spells.Pain]: 1.01,
-      [Spells.PurgeTheWicked]: 0.94,
-      [Spells.Solace]: 0.94,
-      [Spells.Schism]: 0.94,
-      [Spells.PenanceEnemy]: 0.94,
-      [Spells.MindBlast]: 0.76,
-      [Spells.PainDoT]: 1.01,
-      [Spells.PurgeTheWickedDoT]: 0.94,
-    })
-  ) as any,
+  damageMultiplier: () =>
+    new Map(
+      Object.entries({
+        [Spells.Smite]: 0.7 * 1.5,
+        [Spells.Pain]: 1.01,
+        [Spells.PurgeTheWicked]: 0.94,
+        [Spells.Solace]: 0.94,
+        [Spells.Schism]: 0.94,
+        [Spells.PenanceEnemy]: 0.94,
+        [Spells.MindBlast]: 0.76,
+        [Spells.PainDoT]: 1.01,
+        [Spells.PurgeTheWickedDoT]: 0.94,
+      }) as any
+    ),
 }
 
 const ShadowfiendAura: AuraInfo = {
@@ -179,6 +181,7 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.ShadowCovenant]: ShadowCovenant,
   [Auras.ShadowfiendAura]: ShadowfiendAura,
   [Auras.MindbenderAura]: MindbenderAura,
+  ...conduits,
 }
 
 const DbCoefs: Partial<Record<Auras, { db: number }>> = {

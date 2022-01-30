@@ -52,6 +52,7 @@ export class EncounterState {
         expiredAt: null as any,
         eventReference: null as any,
         links: [],
+        level: 252,
       })
     }
     this.friendlyUnitsIdx = new Map()
@@ -304,6 +305,9 @@ export class EncounterState {
       .filter(spell => {
         if (spell.passive) return false
         const player = this.friendlyUnitsIdx.get("0")!
+        if (spell.allowedStatic) {
+          return spell.allowedStatic(player)
+        }
         if (spell.allowed) {
           return spell.allowed(player)
         }

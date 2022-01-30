@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 
 // Hook
 export function useWhyDidYouUpdate(name: string, props: Record<string, any>) {
