@@ -66,7 +66,7 @@ export class Player {
     this.auras.push(aura)
     const info = auras[aura.id]
     if (info?.damageMultiplier) {
-      for (let [spell, value] of info.damageMultiplier.entries()) {
+      for (let [spell, value] of info.damageMultiplier({ aura }).entries()) {
         let found = this.damageMultAurasBySpell.get(spell)
         if (!found) {
           found = new Map()
@@ -76,7 +76,7 @@ export class Player {
       }
     }
     if (info?.healingMultiplier) {
-      for (let [spell, value] of info.healingMultiplier.entries()) {
+      for (let [spell, value] of info.healingMultiplier({ aura }).entries()) {
         let found = this.healingMultAurasBySpell.get(spell)
         if (!found) {
           found = new Map()
@@ -95,12 +95,12 @@ export class Player {
     const aura = this.auras[index]
     const info = auras[aura.id]
     if (info?.damageMultiplier) {
-      for (let spell of info.damageMultiplier.keys()) {
+      for (let spell of info.damageMultiplier({ aura }).keys()) {
         this.damageMultAurasBySpell.get(spell)?.delete(aura.id)
       }
     }
     if (info?.healingMultiplier) {
-      for (let spell of info.healingMultiplier.keys()) {
+      for (let spell of info.healingMultiplier({ aura }).keys()) {
         this.healingMultAurasBySpell.get(spell)?.delete(aura.id)
       }
     }

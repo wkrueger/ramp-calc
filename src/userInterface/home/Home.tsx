@@ -1,10 +1,10 @@
 import { Badge, Center, Container, Divider, Heading, Stack } from "@chakra-ui/react"
 import immer from "immer"
 import React, { useCallback, useEffect, useState } from "react"
-import { initialProfile, Profile } from "../../data/profile"
+import { initialProfile } from "../../data/profile"
 import useThrottle from "../common/useThrottle"
 import { IndexSetter, WithIndexSetter } from "../common/WIthIndexSetter"
-import { ProfileBox } from "./ProfileBox/ProfileBox"
+import { ProfileBox } from "./ProfileBox"
 
 export function Home() {
   const [root, setRoot] = useState({

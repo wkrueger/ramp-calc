@@ -1,9 +1,11 @@
 {
   "extends": [
-    "next/core-web-vitals"
+    "next/core-web-vitals",
+    "plugin:react/recommended"
   ],
   "rules": {
     "no-console": "warn",
-    "import/no-cycle": "error"
+    "import/no-cycle": "error",
+    "react/react-in-jsx-scope": "off"
   }
 }

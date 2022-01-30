@@ -1,7 +1,7 @@
 import { Talents } from "../data/talents"
+import { Auras } from "./aurasConstants"
 import { EncounterState } from "./EncounterState"
 import { EventLog } from "./EventLog"
-import { spells } from "./spells"
 import { Spells } from "./spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 
@@ -18,8 +18,16 @@ export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
 
 export type CalcResult = ReturnType<typeof getHealing>
 
-export function getEncounterState(p: { playerStatRatings: StatRatingsIn; talents: Talents[] }) {
-  const state = new EncounterState({ playerStatRatings: p.playerStatRatings, talents: p.talents })
+export function getEncounterState(p: {
+  playerStatRatings: StatRatingsIn
+  talents: Talents[]
+  conduits: Auras[]
+}) {
+  const state = new EncounterState({
+    playerStatRatings: p.playerStatRatings,
+    talents: p.talents,
+    conduits: p.conduits,
+  })
   return state
 }
 

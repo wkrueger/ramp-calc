@@ -1,16 +1,16 @@
-import { Stack, Heading, HStack } from "@chakra-ui/layout";
-import React, { useCallback } from "react";
-import { BasicEvent, createEvent } from "../../common/event";
-import { WowIcon } from "../../common/WowIcon";
+import { Heading, HStack, Stack } from "@chakra-ui/layout"
+import React from "react"
+import { BasicEvent, createEvent } from "../common/event"
+import { WowIcon } from "../common/WowIcon"
 
 export function CovenantBox({
   onChange,
   value,
   className,
 }: {
-  className?: string;
-  value: string;
-  onChange: (ev: BasicEvent) => void;
+  className?: string
+  value: string
+  onChange: (ev: BasicEvent) => void
 }) {
   return (
     <Stack className={className}>
@@ -24,9 +24,7 @@ export function CovenantBox({
           label="Venthyr"
           showLabel
           isSelected={value === "venthyr"}
-          onClick={() =>
-            onChange(createEvent({ name: "covenant", value: "venthyr" }))
-          }
+          onClick={() => onChange(createEvent({ name: "covenant", value: "venthyr" }))}
         />
         <WowIcon
           className="clickable"
@@ -34,11 +32,9 @@ export function CovenantBox({
           label="Kyrian"
           showLabel
           isSelected={value === "kyrian"}
-          onClick={() =>
-            onChange(createEvent({ name: "covenant", value: "kyrian" }))
-          }
+          onClick={() => onChange(createEvent({ name: "covenant", value: "kyrian" }))}
         />
       </HStack>
     </Stack>
-  );
+  )
 }

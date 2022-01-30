@@ -1,6 +1,6 @@
 import { Talents } from "../data/talents"
-import { auras } from "./auras"
 import { Auras } from "./aurasConstants"
+import { conduits } from "./conduits"
 import { EventLog } from "./EventLog"
 import { CombatEvent, eventEffects } from "./events"
 import { Enemy, Player } from "./Player"
@@ -23,7 +23,7 @@ export class EncounterState {
   eventLog = new EventLog()
   time = 0
 
-  constructor(args: { playerStatRatings: StatRatingsIn; talents: Talents[] }) {
+  constructor(args: { playerStatRatings: StatRatingsIn; talents: Talents[]; conduits: Auras[] }) {
     const friendlyUnits = Array(this.GROUP_SIZE)
       .fill(null)
       .map((_, idx) => {
@@ -42,6 +42,18 @@ export class EncounterState {
       eventReference: null as any,
       links: [],
     })
+    for (const conduitId of args.conduits) {
+      const check = conduits[conduitId]
+      if (!check) throw Error(`Aura ${conduitId} not listed in conduits.`)
+      friendlyUnits[0].addAura({
+        id: conduitId,
+        appliedAt: 0,
+        caster: "0",
+        expiredAt: null as any,
+        eventReference: null as any,
+        links: [],
+      })
+    }
     this.friendlyUnitsIdx = new Map()
     this.allUnitsIdx = new Map()
     for (const unit of friendlyUnits) {

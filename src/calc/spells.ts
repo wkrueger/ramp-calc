@@ -247,7 +247,7 @@ const AscendedNova = PriestSpell({
   onDamage: [triggerHealAsDamagePct({ k: 0.24, spell: AscendedNovaHeal })],
 })
 
-const Eruption = PriestSpell({
+const AscendedEruption = PriestSpell({
   id: Spells.AscendedEruption,
   label: "Ascended Eruption",
   icon: "ability_bastion_priest",
@@ -255,8 +255,11 @@ const Eruption = PriestSpell({
   cast: 0,
   passive: true,
   getDamage({ intellect }, player) {
-    const aura = player.getAura(Auras.Boon)!
-    return 2.1 * intellect * (1 + 0.03 * (aura.stacks || 1))
+    const boonAura = player.getAura(Auras.Boon)!
+    const courageousAscensionMult = Boolean(player.getAura(Auras.CourageousAscension))
+      ? 1 + (boonAura.stacks || 1) * 0.01
+      : 1
+    return 2.1 * intellect * (1 + 0.03 * (boonAura.stacks || 1)) * courageousAscensionMult
   },
 })
 
@@ -614,7 +617,7 @@ export const spells: Record<string, Spell> = {
   [Spells.Boon]: Boon,
   [Spells.AscendedBlast]: AscendedBlast,
   [Spells.AscendedBlastHeal]: AscendedBlastHeal,
-  [Spells.AscendedEruption]: Eruption,
+  [Spells.AscendedEruption]: AscendedEruption,
   [Spells.AscendedNova]: AscendedNova,
   [Spells.AscendedNovaHeal]: AscendedNovaHeal,
   [Spells.Schism]: Schism,

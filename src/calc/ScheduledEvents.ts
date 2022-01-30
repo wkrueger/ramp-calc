@@ -24,7 +24,6 @@ export class ScheduledEvents {
   }
 
   push(obj: { event: CombatEvent; time: number }) {
-    const { time } = obj
     if (!this.tailLink) {
       const newLink: Link = { value: obj, next: null, prev: null }
       this.headLink = newLink

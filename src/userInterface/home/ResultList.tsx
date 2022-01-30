@@ -17,16 +17,16 @@ import {
   Thead,
   Tr,
   useDisclosure,
-  useWhyDidYouUpdate,
 } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
-import { CalcResult, getEncounterState, getHealing } from "../../../calc"
-import { EventTime } from "../../../calc/events"
-import { Spells } from "../../../calc/spellsConstants"
-import { Profile } from "../../../data/profile"
-import { numberFormat } from "../../common/numberFormat"
-import { useDebounce } from "../../common/useDebounce"
-import { WowIcon } from "../../common/WowIcon"
+import { CalcResult, getEncounterState, getHealing } from "../../calc"
+import { Auras } from "../../calc/aurasConstants"
+import { EventTime } from "../../calc/events"
+import { Spells } from "../../calc/spellsConstants"
+import { Profile } from "../../data/profile"
+import { numberFormat } from "../common/numberFormat"
+import { useDebounce } from "../common/useDebounce"
+import { WowIcon } from "../common/WowIcon"
 
 type ResultsType = ({ type: "ok" } & CalcResult) | { type: "error"; error: any }
 
@@ -84,6 +84,7 @@ export function ResultList({
       const state = getEncounterState({
         playerStatRatings: throttledProfile.stats,
         talents: throttledProfile.talents,
+        conduits: throttledProfile.conduits as Auras[],
       })
       setProfile(profile => {
         return {

@@ -20,13 +20,13 @@ import {
 import immer from "immer"
 import _set from "lodash/set"
 import React, { memo, useCallback, useMemo } from "react"
-import { BasicEvent } from "../../common/event"
-import { usePopupState } from "../../common/usePopupState"
-import { conduitsIdx } from "../../../data/conduits"
-import { covenants } from "../../../data/covenants"
-import { Profile } from "../../../data/profile"
-import { talentsIdx } from "../../../data/talents"
-import { WowIcon } from "../../common/WowIcon"
+import { BasicEvent } from "../common/event"
+import { usePopupState } from "../common/usePopupState"
+import { conduitsIdx } from "../../data/conduits"
+import { covenants } from "../../data/covenants"
+import { Profile } from "../../data/profile"
+import { talentsIdx } from "../../data/talents"
+import { WowIcon } from "../common/WowIcon"
 import { ConduitBox } from "./ConduitBox"
 import { CovenantBox } from "./CovenantBox"
 import { SpellsList } from "./SpellsList"
@@ -58,7 +58,7 @@ const containerStyles: CSSObject = {
   },
 }
 
-function ProfileBoxRaw({
+function ProfileBox_({
   profile,
   setProfile,
 }: {
@@ -266,4 +266,4 @@ function ProfileBoxRaw({
   )
 }
 
-export const ProfileBox = memo(ProfileBoxRaw)
+export const ProfileBox = memo(ProfileBox_)

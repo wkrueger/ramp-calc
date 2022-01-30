@@ -1,4 +1,4 @@
-export enum Auras {
+export const enum Auras {
   Atonement = "atonement",
   Schism = "schism-aura",
   Pain = "pain-aura",
@@ -11,6 +11,8 @@ export enum Auras {
   ShadowfiendAura = "shadowfiend-aura",
   ShadowCovenant = "shadow-covenant",
   MindbenderAura = "mindbender-aura",
+  // conduits
+  CourageousAscension = "courageous-ascension",
 }
 
 export const DURATION_INFINITE = Symbol()

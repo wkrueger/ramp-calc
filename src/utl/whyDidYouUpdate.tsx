@@ -19,6 +19,7 @@ export function useWhyDidYouUpdate(name: string, props: Record<string, any>) {
 
       // If changesObj not empty then output to console
       if (Object.keys(changesObj).length) {
+        // eslint-disable-next-line no-console
         console.log("[why-did-you-update]", name, changesObj)
       }
     }

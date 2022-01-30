@@ -13,6 +13,7 @@ export interface Aura {
   expiredAt: number
   stacks?: number
   links: Link[]
+  level?: number
 }
 
 export interface AuraInfo {
@@ -23,8 +24,8 @@ export interface AuraInfo {
     interval: number
     getDoTDamage: (stats: StatRatingsIn, auraInfo: AuraInfo) => number
   }
-  damageMultiplier?: Map<Spells, number>
-  healingMultiplier?: Map<Spells, number>
+  damageMultiplier?: (i: { aura: Aura }) => Map<Spells, number>
+  healingMultiplier?: (i: { aura: Aura }) => Map<Spells, number>
   onExpire?: (event: PickFromUn<CombatEvent, "aura_remove">, encounter: EncounterState) => void
 }
 
@@ -93,27 +94,29 @@ const Rapture: AuraInfo = {
 const Schism: AuraInfo = {
   id: Auras.Schism,
   duration: 9,
-  damageMultiplier: new Map(
-    Object.values(Spells)
-      .filter(name => ![Spells.ShadowfiendDoT, Spells.MindbenderDoT].includes(name))
-      .map(name => {
-        return [name, 1.25]
-      })
-  ),
+  damageMultiplier: () =>
+    new Map(
+      Object.values(Spells)
+        .filter(name => ![Spells.ShadowfiendDoT, Spells.MindbenderDoT].includes(name))
+        .map(name => {
+          return [name, 1.25]
+        })
+    ),
 }
 
 const ShadowCovenant: AuraInfo = {
   id: Auras.ShadowCovenant,
   duration: 7,
-  damageMultiplier: new Map([
-    [Spells.MindBlast, 1.25],
-    [Spells.Pain, 1.25],
-    [Spells.PainDoT, 1.25],
-    [Spells.PurgeTheWicked, 1, 25],
-    [Spells.PurgeTheWickedDoT, 1.25],
-    [Spells.Schism, 1.25],
-  ] as any),
-  healingMultiplier: new Map([[Spells.ShadowMend, 1.25]] as any),
+  damageMultiplier: () =>
+    new Map([
+      [Spells.MindBlast, 1.25],
+      [Spells.Pain, 1.25],
+      [Spells.PainDoT, 1.25],
+      [Spells.PurgeTheWicked, 1, 25],
+      [Spells.PurgeTheWickedDoT, 1.25],
+      [Spells.Schism, 1.25],
+    ] as any),
+  healingMultiplier: () => new Map([[Spells.ShadowMend, 1.25]] as any),
 }
 
 const SpiritShellModifier: AuraInfo = {

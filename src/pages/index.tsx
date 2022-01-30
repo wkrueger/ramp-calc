@@ -1,5 +1,5 @@
-import { Home } from "../ui/home/Home";
-import Head from "next/head";
+import { Home } from "../userInterface/home/Home"
+import Head from "next/head"
 
 export default function Main() {
   return (
@@ -9,5 +9,5 @@ export default function Main() {
       </Head>
       <Home />
     </>
-  );
+  )
 }
