@@ -457,7 +457,7 @@ const Rapture = PriestSpell({
 
 const MindBlast = PriestSpell({
   id: Spells.MindBlast,
-  label: "Mind Blasr",
+  label: "Mind Blast",
   icon: "spell_shadow_unholyfrenzy",
   targetting: Targetting.Enemy,
   cast: 1.5,
@@ -504,6 +504,16 @@ const ShadowCovenantApplyAura = PriestSpell({
   applyAura: Auras.ShadowCovenant,
 })
 
+const rabidShadowsMult = new MultCalc({
+  200: 26.6,
+  213: 28.5,
+  226: 30.4,
+  239: 32.3,
+  252: 34.2,
+  265: 36.1,
+  278: 38,
+})
+
 const Shadowfiend = PriestSpell({
   id: Spells.Shadowfiend,
   label: "Shadowfiend",
@@ -511,9 +521,33 @@ const Shadowfiend = PriestSpell({
   targetting: Targetting.Enemy,
   cast: 0,
   cooldown: 180,
-  applyAura: Auras.ShadowfiendAura,
+  // applyAura: Auras.ShadowfiendAura,
   allowed(player) {
     return !player.getTalent(Talents.Mindbender)
+  },
+  onCastSuccess(ev, es, caster) {
+    const rabidShadows = caster.getAura(Auras.RabidShadows)
+    let tickPct = 1
+    if (rabidShadows) {
+      tickPct = 1 + rabidShadowsMult.calc(rabidShadows.level!) / 100
+    }
+
+    const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
+    for (const currentTarget of currentTargets) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_apply",
+          aura: Auras.ShadowfiendAura,
+          source: caster.id,
+          target: currentTarget,
+          auraModifiers: {
+            tickPct,
+          },
+        },
+      })
+    }
   },
 })
 
@@ -533,9 +567,33 @@ const Mindbender = PriestSpell({
   targetting: Targetting.Enemy,
   cast: 0,
   cooldown: 60,
-  applyAura: Auras.MindbenderAura,
+  // applyAura: Auras.MindbenderAura,
   allowed(player) {
     return Boolean(player.getTalent(Talents.Mindbender))
+  },
+  onCastSuccess(ev, es, caster) {
+    const rabidShadows = caster.getAura(Auras.RabidShadows)
+    let tickPct = 1
+    if (rabidShadows) {
+      tickPct = 1 + rabidShadowsMult.calc(rabidShadows.level!) / 100
+    }
+
+    const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
+    for (const currentTarget of currentTargets) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_apply",
+          aura: Auras.MindbenderAura,
+          source: caster.id,
+          target: currentTarget,
+          auraModifiers: {
+            tickPct,
+          },
+        },
+      })
+    }
   },
 })
 

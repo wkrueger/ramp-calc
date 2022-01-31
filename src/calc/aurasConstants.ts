@@ -14,6 +14,7 @@ export const enum Auras {
   // conduits
   CourageousAscension = "courageous-ascension",
   Exaltation = "exaltation",
+  RabidShadows = "rabid-shadows",
 }
 
 export const DURATION_INFINITE = Symbol()

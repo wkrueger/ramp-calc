@@ -41,7 +41,13 @@ const Exaltation: AuraInfo = {
   },
 }
 
+const RabidShadows: AuraInfo = {
+  id: Auras.RabidShadows,
+  duration: DURATION_INFINITE,
+}
+
 export const conduits = {
   [Auras.CourageousAscension]: CourageousAscension,
   [Auras.Exaltation]: Exaltation,
+  [Auras.RabidShadows]: RabidShadows,
 }

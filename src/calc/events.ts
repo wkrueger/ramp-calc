@@ -66,6 +66,7 @@ export type CombatEvent =
       auraModifiers?: {
         durationPct?: number // radiance
         durationSec?: number
+        tickPct?: number
       }
     }
   | {
@@ -225,7 +226,8 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       }
       target.addAura(aura)
       if (auraInfo.dot) {
-        const hastePct = 1 + caster.stats.getHastePct()
+        const tickMult = event.auraModifiers?.tickPct || 1
+        const hastePct = (1 + caster.stats.getHastePct()) * tickMult
         const composedMult = composeDamageMultiplier({
           caster,
           spell: auraInfo.dot.spell,
