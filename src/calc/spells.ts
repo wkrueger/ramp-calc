@@ -6,6 +6,7 @@ import {
   triggerAtonement,
   triggerContrition,
   triggerHealAsDamagePct,
+  triggerPowerOfTheDarkSide,
 } from "./damageEffects"
 import type { CombatEvent, PickFromUn } from "./eventEffects"
 import type { Player } from "./Player"
@@ -124,6 +125,7 @@ const PainDoT = PriestSpell({
   passive: true,
   cast: 0,
   targetting: Targetting.Enemy,
+  onDamage: [triggerPowerOfTheDarkSide],
 })
 
 const PurgeTheWicked = PriestSpell({
@@ -147,6 +149,7 @@ const PurgeTheWickedDoT = PriestSpell({
   targetting: Targetting.Enemy,
   passive: true,
   cast: 0,
+  onDamage: [triggerPowerOfTheDarkSide],
 })
 
 const exaltationMult = new MultCalc({
@@ -228,6 +231,21 @@ const Radiance = PriestSpell({
   },
   getHealing({ intellect }) {
     return intellect * 1.05
+  },
+  onCastSuccess(event, es, caster) {
+    const hasTillDawn = caster.getAura(Auras.TilDawn)
+    if (hasTillDawn) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_apply",
+          aura: Auras.PowerOfTheDarkSideProc,
+          source: caster.id,
+          target: caster.id,
+        },
+      })
+    }
   },
 })
 
@@ -433,6 +451,22 @@ const PenanceFriendly = PriestSpell({
     }
     return 1.25 * intellect * swiftPenitenceValue
   },
+  onCastSuccess(event, es, caster) {
+    const hasPOTS = caster.getAura(Auras.PowerOfTheDarkSideProc)
+    if (hasPOTS) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_sum_stacks",
+          aura: Auras.PowerOfTheDarkSideProc,
+          quantity: -1,
+          source: event.source,
+          target: event.source,
+        },
+      })
+    }
+  },
 })
 
 const PenanceEnemy = PriestSpell({
@@ -441,11 +475,12 @@ const PenanceEnemy = PriestSpell({
   icon: "spell_holy_penance",
   targetting: Targetting.Enemy,
   cast: 2,
+  cooldown: 9,
+  travelTime: 0.4,
   channel: player => {
     const nticks = player.getTalent(Talents.Castigation) ? 4 : 3
     return { ticks: nticks }
   },
-  travelTime: 0.4,
   getDamage(stats, caster, event) {
     const prev = getDamage.call(this, stats)
     const swiftPenitenceAura = caster.getAura(Auras.SwiftPenitence)
@@ -458,7 +493,22 @@ const PenanceEnemy = PriestSpell({
     }
     return prev * swiftPenitenceValue
   },
-  cooldown: 9,
+  onCastSuccess(event, es, caster) {
+    const hasPOTS = caster.getAura(Auras.PowerOfTheDarkSideProc)
+    if (hasPOTS) {
+      es.scheduledEvents.push({
+        time: es.time,
+        event: {
+          id: es.createEventId(),
+          type: "aura_sum_stacks",
+          aura: Auras.PowerOfTheDarkSideProc,
+          quantity: -1,
+          source: event.source,
+          target: event.source,
+        },
+      })
+    }
+  },
 })
 
 const Rapture = PriestSpell({

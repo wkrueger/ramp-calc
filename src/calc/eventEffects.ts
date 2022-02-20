@@ -1,5 +1,5 @@
 import { Aura, auras } from "./auras"
-import { Auras } from "./constants/aurasConstants"
+import { Auras, DURATION_INFINITE } from "./constants/aurasConstants"
 import type { EncounterState } from "./EncounterState"
 import { Player } from "./Player"
 import { CritBehavior, spells, VersBehavior } from "./spells"
@@ -81,7 +81,14 @@ export type CombatEvent =
       aura: Auras
       source: string
       target: string
-      eventReference: number
+    }
+  | {
+      id: number
+      type: "aura_sum_stacks"
+      aura: Auras
+      source: string
+      target: string
+      quantity: number
     }
 
 export interface EventTime {
@@ -166,6 +173,11 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     event: PickFromUn<CombatEvent, "spell_channel_start">,
     encounter: EncounterState
   ) => {
+    const spellInfo = spells[event.spell]
+    const caster = encounter.friendlyUnitsIdx.get(event.source)!
+    if (spellInfo.onCastSuccess) {
+      spellInfo.onCastSuccess(event as any, encounter, caster)
+    }
     return eventEffects.spell_cast_start(event, encounter)
   },
   spell_cast_success: (
@@ -177,17 +189,16 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     const spellInfo = spells[event.spell]
     const isAllowed = caster.spellIsAllowed(spellInfo)
     if (!isAllowed) throw Error(`Spell ${event.spell} not allowed now.`)
-    if (!spellInfo.cast) {
-      if (!caster.canCastSpell({ time: encounter.time, spell: spellInfo.id })) {
-        throw Error(`Spell ${spellInfo.id} on recharge.`)
-      }
-      const computedCast = (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
-      const gcdEnd = encounter.time + computedCast
-      const recharge = (spellInfo.cooldown || 0) / (1 + caster.stats.getHastePct())
+    {
+      const gcdEnd = spellInfo.cast
+        ? encounter.time
+        : encounter.time + (spellInfo.gcd || 1.5) / (1 + caster.stats.getHastePct())
+      const recharge = spellInfo.cooldown || 0
       const rechargeMax = Math.max(gcdEnd, recharge)
       caster.setSpellRecharge(spellInfo, rechargeMax)
     }
-    if (spellInfo.onCastSuccess) {
+    // if channelled, occurs on cast start
+    if (spellInfo.onCastSuccess && !spellInfo.channel) {
       spellInfo.onCastSuccess(event, encounter, caster)
     }
   },
@@ -266,14 +277,42 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     }
     const durationModifier = event.auraModifiers?.durationPct ?? 1
     const durationModSec = event.auraModifiers?.durationSec || 0
-    if (typeof auraInfo.duration === "number") {
+    if (auraInfo.duration === DURATION_INFINITE) {
+      const alreadyHasAura = target.getAura(event.aura)
+      if (!alreadyHasAura) {
+        target.addAura({
+          id: auraInfo.id,
+          caster: event.source,
+          appliedAt: encounter.time,
+          eventReference: event.id,
+          expiredAt: Infinity,
+          links: [],
+        })
+      }
+    } else if (typeof auraInfo.duration === "number") {
+      const alreadyHasAura = target.getAura(event.aura)
       const auraExpireTime = encounter.time + auraInfo.duration * durationModifier + durationModSec
+      if (alreadyHasAura) {
+        const aura = alreadyHasAura
+        if (auraInfo.stackable) {
+          aura.stacks = (aura.stacks || 1) + 1
+        }
+        // reposition expire event
+        const expireLinkIndex = aura.links.findIndex(x => x.value.event.type === "aura_remove")
+        if (expireLinkIndex) throw Error("Expire link not found.")
+        const [expireLink] = aura.links.splice(expireLinkIndex, 1)
+        encounter.scheduledEvents.removeByLink(expireLink)
+        expireLink.value.time = auraExpireTime
+        const newLink = encounter.scheduledEvents.push(expireLink.value)
+        aura.links.push(newLink)
+        // FIXME PANDEMIC (reposition dot events)
+        return
+      }
       const link = encounter.scheduledEvents.push({
         time: auraExpireTime,
         event: {
           id: encounter.createEventId(),
           type: "aura_remove",
-          eventReference: event.id,
           source: caster.id,
           target: target.id,
           aura: event.aura,
@@ -287,6 +326,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
         expiredAt: auraExpireTime,
         links: [link],
       }
+
       target.addAura(aura)
       if (auraInfo.dot) {
         const tickMult = event.auraModifiers?.tickPct || 1
@@ -355,6 +395,35 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (auraInfo.onExpire) {
       auraInfo.onExpire(event, encounter)
     }
-    target.removeAura({ eventReference: event.eventReference })
+    const aura = target.getAura(auraInfo.id)
+    if (!aura) return
+    // an extra aura_remove can be invoked prematurely (ex: dispel, consume aura)
+    // in that case, remove all of the scheduled ticks etc.
+    for (const link of aura.links) {
+      encounter.scheduledEvents.removeByLink(link)
+    }
+    target.removeAura(auraInfo.id)
+  },
+  aura_sum_stacks: (
+    event: PickFromUn<CombatEvent, "aura_sum_stacks">,
+    encounter: EncounterState
+  ) => {
+    const { aura: auraId, target: hostId, quantity } = event
+    const host = encounter.allUnitsIdx.get(hostId)!
+    const aura = host.getAura(auraId)
+    if (!aura) return
+    aura.stacks = Math.max((aura.stacks || 1) + quantity, 0)
+    if (aura.stacks <= 0) {
+      encounter.scheduledEvents.push({
+        time: encounter.time,
+        event: {
+          id: encounter.createEventId(),
+          type: "aura_remove",
+          aura: auraId,
+          source: event.source,
+          target: event.target,
+        },
+      })
+    }
   },
 }

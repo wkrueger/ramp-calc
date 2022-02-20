@@ -23,12 +23,18 @@ export function getEncounterState(p: {
   playerStatRatings: StatRatingsIn
   talents: Talents[]
   conduits: Auras[]
+  hasTierSet: boolean
 }) {
+  const otherAuras: Auras[] = []
+  if (p.hasTierSet) {
+    otherAuras.push(Auras.TilDawn)
+  }
   const state = new EncounterState({
     playerStatRatings: p.playerStatRatings,
     talents: p.talents,
     conduits: p.conduits,
     critMode: CritMode.Average,
+    otherAuras,
   })
   return state
 }

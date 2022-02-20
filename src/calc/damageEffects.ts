@@ -114,3 +114,11 @@ export const triggerContrition = new HealEffect({
     }
   },
 })
+
+export const triggerPowerOfTheDarkSide = new DamageEffect({
+  name: "triggetPOTS",
+  trigger() {
+    // ignore, bad for numbers
+    // const doTrigger = caster.tryProcBucket('pots', 0.025)
+  },
+})

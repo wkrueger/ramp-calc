@@ -11,12 +11,15 @@ export const enum Auras {
   ShadowfiendAura = "shadowfiend-aura",
   ShadowCovenant = "shadow-covenant",
   MindbenderAura = "mindbender-aura",
+  PowerOfTheDarkSideProc = "potds-proc", // use "proc" name to reserve "passive" variant
   // conduits
   CourageousAscension = "courageous-ascension",
   Exaltation = "exaltation",
   RabidShadows = "rabid-shadows",
   ShiningRadiance = "shining-radiance",
   SwiftPenitence = "swift-penitence",
+  // tier-set
+  TilDawn = "til-dawn", //4pc
 }
 
 export const DURATION_INFINITE = Symbol()

@@ -5,6 +5,8 @@ import type { CombatEvent, PickFromUn } from "./eventEffects"
 import type { Link } from "./ScheduledEvents"
 import { Spells } from "./constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
+import memo from "lodash/memoize"
+import type { Player } from "./Player"
 
 export interface Aura {
   id: Auras
@@ -20,13 +22,14 @@ export interface Aura {
 export interface AuraInfo {
   id: Auras
   duration: number | typeof DURATION_INFINITE
+  stackable?: boolean
   dot?: {
     spell: Spells
     interval: number
     getDoTDamage: (stats: StatRatingsIn, auraInfo: AuraInfo) => number
   }
-  damageMultiplier?: (i: { aura: Aura }) => Map<Spells, number>
-  healingMultiplier?: (i: { aura: Aura }) => Map<Spells, number>
+  damageMultiplier?: (i: { aura: Aura; caster: Player }) => Map<Spells, number>
+  healingMultiplier?: (i: { aura: Aura; caster: Player }) => Map<Spells, number>
   onExpire?: (event: PickFromUn<CombatEvent, "aura_remove">, encounter: EncounterState) => void
 }
 
@@ -51,7 +54,7 @@ const Boon: AuraInfo = {
       spells[Spells.AscendedEruption],
       event.target
     )[0]!
-    const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player, null as any) // danger
+    const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player, {} as any) // danger
     encounter.scheduledEvents.push({
       time: encounter.time,
       event: {
@@ -108,16 +111,18 @@ const Schism: AuraInfo = {
 const ShadowCovenant: AuraInfo = {
   id: Auras.ShadowCovenant,
   duration: 7,
-  damageMultiplier: () =>
-    new Map([
-      [Spells.MindBlast, 1.25],
-      [Spells.Pain, 1.25],
-      [Spells.PainDoT, 1.25],
-      [Spells.PurgeTheWicked, 1, 25],
-      [Spells.PurgeTheWickedDoT, 1.25],
-      [Spells.Schism, 1.25],
-    ] as any),
-  healingMultiplier: () => new Map([[Spells.ShadowMend, 1.25]] as any),
+  damageMultiplier: memo(
+    () =>
+      new Map<Spells, number>([
+        [Spells.MindBlast, 1.25],
+        [Spells.Pain, 1.25],
+        [Spells.PainDoT, 1.25],
+        [Spells.PurgeTheWicked, 1.25],
+        [Spells.PurgeTheWickedDoT, 1.25],
+        [Spells.Schism, 1.25],
+      ])
+  ),
+  healingMultiplier: memo(() => new Map([[Spells.ShadowMend, 1.25]])),
 }
 
 const SpiritShellModifier: AuraInfo = {
@@ -132,20 +137,22 @@ const SinsOfTheMany: AuraInfo = {
 const DisciplineSpec: AuraInfo = {
   id: Auras.DisciplineSpec,
   duration: DURATION_INFINITE,
-  damageMultiplier: () =>
-    new Map(
-      Object.entries({
-        [Spells.Smite]: 0.7 * 1.5,
-        [Spells.Pain]: 1.01,
-        [Spells.PurgeTheWicked]: 0.94,
-        [Spells.Solace]: 0.94,
-        [Spells.Schism]: 0.94,
-        [Spells.PenanceEnemy]: 0.94,
-        [Spells.MindBlast]: 0.76,
-        [Spells.PainDoT]: 1.01,
-        [Spells.PurgeTheWickedDoT]: 0.94,
-      }) as any
-    ),
+  damageMultiplier: memo(
+    () =>
+      new Map(
+        Object.entries({
+          [Spells.Smite]: 0.7 * 1.5,
+          [Spells.Pain]: 1.01,
+          [Spells.PurgeTheWicked]: 0.94,
+          [Spells.Solace]: 0.94,
+          [Spells.Schism]: 0.94,
+          [Spells.PenanceEnemy]: 0.94,
+          [Spells.MindBlast]: 0.76,
+          [Spells.PainDoT]: 1.01,
+          [Spells.PurgeTheWickedDoT]: 0.94,
+        })
+      ) as any
+  ),
 }
 
 const ShadowfiendAura: AuraInfo = {
@@ -168,6 +175,27 @@ const MindbenderAura: AuraInfo = {
   },
 }
 
+const PowerOfTheDarkSideProc: AuraInfo = {
+  id: Auras.PowerOfTheDarkSideProc,
+  duration: 20,
+  stackable: true,
+  damageMultiplier: ({ caster }) => {
+    const hasTillDawn = caster.getAura(Auras.TilDawn)
+    const mult = hasTillDawn ? 1.95 : 1.5
+    return new Map([[Spells.PenanceEnemy, mult]])
+  },
+  healingMultiplier: ({ caster }) => {
+    const hasTillDawn = caster.getAura(Auras.TilDawn)
+    const mult = hasTillDawn ? 1.95 : 1.5
+    return new Map([[Spells.PenanceFriendly, mult]])
+  },
+}
+
+const TilDawn: AuraInfo = {
+  id: Auras.TilDawn,
+  duration: DURATION_INFINITE,
+}
+
 export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.Pain]: Pain,
   [Auras.PurgeTheWicked]: PurgeTheWicked,
@@ -181,6 +209,8 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.ShadowCovenant]: ShadowCovenant,
   [Auras.ShadowfiendAura]: ShadowfiendAura,
   [Auras.MindbenderAura]: MindbenderAura,
+  [Auras.PowerOfTheDarkSideProc]: PowerOfTheDarkSideProc,
+  [Auras.TilDawn]: TilDawn,
   ...conduits,
 }
 

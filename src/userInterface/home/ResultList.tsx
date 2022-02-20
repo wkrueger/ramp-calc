@@ -85,6 +85,7 @@ export function ResultList({
         playerStatRatings: throttledProfile.stats,
         talents: throttledProfile.talents,
         conduits: throttledProfile.conduits as Auras[],
+        hasTierSet: throttledProfile.enableTierSet,
       })
       setProfile(profile => {
         return {
@@ -113,6 +114,7 @@ export function ResultList({
     throttledProfile.stats,
     throttledProfile.talents,
     throttledProfile.conduits,
+    throttledProfile.enableTierSet,
     // fixme: if I pass root profile it infinite loops
   ])
 

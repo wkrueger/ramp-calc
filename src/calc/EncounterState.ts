@@ -30,6 +30,7 @@ export class EncounterState {
     playerStatRatings: StatRatingsIn
     talents: Talents[]
     conduits: Auras[]
+    otherAuras?: Auras[]
     critMode: CritMode
   }) {
     this.critMode = args.critMode
@@ -74,6 +75,49 @@ export class EncounterState {
     const enemy = new Enemy({ id: "e0" })
     this.enemyUnitsIdx.set(enemy.id, enemy)
     this.allUnitsIdx.set(enemy.id, enemy)
+    for (const aura of args.otherAuras || []) {
+      this.scheduledEvents.push({
+        time: this.time,
+        event: {
+          id: this.createEventId(),
+          type: "aura_apply",
+          aura,
+          source: "0",
+          target: "0",
+        },
+      })
+    }
+    this.scheduledEvents.push({
+      time: 0,
+      event: {
+        id: this.createEventId(),
+        type: "_queuenext",
+      },
+    })
+  }
+
+  run() {
+    let currentEvent = this.scheduledEvents.shift()
+    if (!currentEvent) {
+      this.pushNextSpell()
+      currentEvent = this.scheduledEvents.shift()
+    }
+    while (currentEvent) {
+      this.time = currentEvent.time
+      const eventType = currentEvent.event.type as any
+      if (eventType === "_queuenext") {
+        this.pushNextSpell()
+      } else {
+        const eventEffect = eventEffects[eventType]
+        if (!eventEffect) {
+          throw Error(`No event handler for ${eventType}`)
+        }
+        eventEffect(currentEvent.event, this)
+        this.eventLog.push(currentEvent)
+      }
+
+      currentEvent = this.scheduledEvents.shift()
+    }
   }
 
   queueSequence(source: string, sequence: Spells[]) {
@@ -286,30 +330,6 @@ export class EncounterState {
     })
     for (const item of scheduledEvents) {
       this.scheduledEvents.push(item)
-    }
-  }
-
-  run() {
-    let currentEvent = this.scheduledEvents.shift()
-    if (!currentEvent) {
-      this.pushNextSpell()
-      currentEvent = this.scheduledEvents.shift()
-    }
-    while (currentEvent) {
-      this.time = currentEvent.time
-      const eventType = currentEvent.event.type as any
-      if (eventType === "_queuenext") {
-        this.pushNextSpell()
-      } else {
-        const eventEffect = eventEffects[eventType]
-        if (!eventEffect) {
-          throw Error(`No event handler for ${eventType}`)
-        }
-        eventEffect(currentEvent.event, this)
-        this.eventLog.push(currentEvent)
-      }
-
-      currentEvent = this.scheduledEvents.shift()
     }
   }
 
