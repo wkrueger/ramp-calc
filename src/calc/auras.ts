@@ -51,7 +51,7 @@ const Boon: AuraInfo = {
       spells[Spells.AscendedEruption],
       event.target
     )[0]!
-    const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player)
+    const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player, null as any) // danger
     encounter.scheduledEvents.push({
       time: encounter.time,
       event: {

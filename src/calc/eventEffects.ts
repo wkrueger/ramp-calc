@@ -18,6 +18,8 @@ export type CombatEvent =
       source: string
       value: number | null
       calcValue?: boolean
+      tickNumber?: number
+      totalTicks?: number
     }
   | {
       id: number
@@ -28,6 +30,8 @@ export type CombatEvent =
       value: number | null
       calcValue?: boolean
       sourceEvent?: number //atonement tracking
+      tickNumber?: number
+      totalTicks?: number
     }
   | {
       id: number
@@ -205,7 +209,8 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
         critMode: encounter.critMode,
       })
       if (spellInfo.getDamage) {
-        const value = spellInfo.getDamage(caster.stats.getStatRatings(), caster) * composedMult
+        const value =
+          spellInfo.getDamage(caster.stats.getStatRatings(), caster, event) * composedMult
         event.value = value
       } else if (event.value) {
         event.value = event.value * composedMult
@@ -228,7 +233,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     }
     if (event.calcValue) {
       if (spellInfo.getHealing) {
-        const value = spellInfo.getHealing(caster.stats.getStatRatings(), caster)
+        const value = spellInfo.getHealing(caster.stats.getStatRatings(), caster, event)
         const mult = composeHealingMultiplier({
           spell: spellInfo,
           caster,

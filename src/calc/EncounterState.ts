@@ -223,7 +223,7 @@ export class EncounterState {
             return time + index * tickTime + (spellInfo.travelTime || 0)
           })
         }
-        ticksInfo.forEach(eachTick => {
+        ticksInfo.forEach((eachTick, idx) => {
           if (spellInfo.getDamage) {
             out.scheduledEvents.push({
               time: eachTick,
@@ -235,6 +235,8 @@ export class EncounterState {
                 target: currentTarget,
                 value: null,
                 calcValue: true,
+                tickNumber: idx,
+                totalTicks: ticksInfo.length,
               },
             })
           }
@@ -249,6 +251,8 @@ export class EncounterState {
                 target: currentTarget,
                 value: null,
                 calcValue: true,
+                tickNumber: idx,
+                totalTicks: ticksInfo.length,
               },
             })
           }

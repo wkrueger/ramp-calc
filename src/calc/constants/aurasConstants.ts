@@ -16,6 +16,7 @@ export const enum Auras {
   Exaltation = "exaltation",
   RabidShadows = "rabid-shadows",
   ShiningRadiance = "shining-radiance",
+  SwiftPenitence = "swift-penitence",
 }
 
 export const DURATION_INFINITE = Symbol()

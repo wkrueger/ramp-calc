@@ -65,9 +65,25 @@ const ShiningRadiance: AuraInfo = {
   },
 }
 
+export const swiftPenitenceMult = new MultCalc({
+  200: 42,
+  213: 45,
+  226: 48,
+  239: 51,
+  252: 54,
+  265: 57,
+  278: 60,
+})
+
+const SwiftPenitence: AuraInfo = {
+  id: Auras.SwiftPenitence,
+  duration: DURATION_INFINITE,
+}
+
 export const conduits = {
   [Auras.CourageousAscension]: CourageousAscension,
   [Auras.Exaltation]: Exaltation,
   [Auras.RabidShadows]: RabidShadows,
   [Auras.ShiningRadiance]: ShiningRadiance,
+  [Auras.SwiftPenitence]: SwiftPenitence,
 }

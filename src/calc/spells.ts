@@ -13,6 +13,7 @@ import { Spells } from "./constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 import { Talents } from "../data/talents"
 import { MultCalc } from "./utl/conduitScale"
+import { swiftPenitenceMult } from "./conduits"
 
 export const enum Targetting {
   Self,
@@ -53,8 +54,17 @@ export interface Spell {
   }
   travelTime?: number
   passive?: boolean
-  getDamage?: (this: this, stats: StatRatingsIn, player: Player) => number
-  getHealing?: (stats: StatRatingsIn, caster: Player) => number
+  getDamage?: (
+    this: this,
+    stats: StatRatingsIn,
+    player: Player,
+    sourceEvent: PickFromUn<CombatEvent, "dmg">
+  ) => number
+  getHealing?: (
+    stats: StatRatingsIn,
+    caster: Player,
+    sourceEvent: PickFromUn<CombatEvent, "heal">
+  ) => number
   onCastSuccess?: (
     event: PickFromUn<CombatEvent, "spell_cast_success">,
     es: EncounterState,
@@ -409,12 +419,20 @@ const PenanceFriendly = PriestSpell({
     return { ticks: nticks }
   },
   travelTime: 0.4,
-  getHealing({ intellect }) {
-    // per tick
-    return 1.25 * intellect
-  },
   cooldown: 9,
   onHeal: [triggerContrition],
+  getHealing({ intellect }, caster, event) {
+    // per tick
+    const swiftPenitenceAura = caster.getAura(Auras.SwiftPenitence)
+    let swiftPenitenceValue = 1
+    if (swiftPenitenceAura) {
+      if (event.tickNumber === 0) {
+        const mult = swiftPenitenceMult.calc(swiftPenitenceAura.level!)
+        swiftPenitenceValue = 1 + mult / 100
+      }
+    }
+    return 1.25 * intellect * swiftPenitenceValue
+  },
 })
 
 const PenanceEnemy = PriestSpell({
@@ -428,7 +446,18 @@ const PenanceEnemy = PriestSpell({
     return { ticks: nticks }
   },
   travelTime: 0.4,
-  getDamage,
+  getDamage(stats, caster, event) {
+    const prev = getDamage.call(this, stats)
+    const swiftPenitenceAura = caster.getAura(Auras.SwiftPenitence)
+    let swiftPenitenceValue = 1
+    if (swiftPenitenceAura) {
+      if (event.tickNumber === 0) {
+        const mult = swiftPenitenceMult.calc(swiftPenitenceAura.level!)
+        swiftPenitenceValue = 1 + mult / 100
+      }
+    }
+    return prev * swiftPenitenceValue
+  },
   cooldown: 9,
 })
 
