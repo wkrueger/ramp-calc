@@ -31,6 +31,7 @@ export const initialProfile = {
       return 0
     })
     .map(spell => spell.id),
+  enableTierSet: true,
 }
 
 export type Profile = typeof initialProfile

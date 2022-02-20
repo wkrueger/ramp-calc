@@ -22,7 +22,7 @@ import { conduitsIdx } from "../../data/conduits"
 import { covenants } from "../../data/covenants"
 import { Profile } from "../../data/profile"
 import { talentsIdx } from "../../data/talents"
-import { BasicEvent } from "../common/event"
+import { BasicEvent, createEvent } from "../common/event"
 import { usePopupState } from "../common/usePopupState"
 import { WowIcon } from "../common/WowIcon"
 import { ConduitBox } from "./ConduitBox"
@@ -50,9 +50,6 @@ const containerStyles: CSSObject = {
     backgroundColor: "rgba(0,0,0,0.1)",
     padding: 4,
     marginRight: 4,
-    ":last-child": {
-      marginRight: 0,
-    },
   },
 }
 
@@ -94,6 +91,15 @@ function ProfileBox_({
       genericChangeProfile(ev)
     }
   }, [genericChangeProfile])
+
+  const toggleTierSet = useCallback(() => {
+    setProfile(profile => {
+      return {
+        ...profile,
+        enableTierSet: !profile.enableTierSet,
+      }
+    })
+  }, [setProfile])
 
   const covenantObject = covenants.find(c => c.code === profile.covenant)!
 
@@ -205,50 +211,68 @@ function ProfileBox_({
           </PopoverContent>
         </Popover>
 
-        {/* conduits */}
-        <Popover
-          isOpen={isConduitPopupOpen}
-          onClose={() => setConduitPopupOpen(false)}
-          isLazy
-          placement="right-start"
-        >
-          <PopoverTrigger>
-            <Stack
-              className="box clickable"
-              alignItems="flex-start"
-              onClick={() => setConduitPopupOpen(true)}
-            >
-              <Heading size="sm" as="h3">
-                Conduits
-              </Heading>
-              {profile.conduits.map(conduitCode => {
-                const conduitObj = conduitsIdx[conduitCode]!
-                return (
-                  <WowIcon
-                    iconName={conduitObj.icon}
-                    label={conduitObj.label}
-                    key={conduitObj.code}
-                  />
-                )
-              })}
-            </Stack>
-          </PopoverTrigger>
-          <PopoverContent width="unset">
-            <PopoverArrow />
-            <PopoverBody>
-              <ConduitBox
-                className="popover-dialog"
-                value={profile.conduits}
-                onChange={genericChangeProfile}
-              />
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
+        <Flex direction="column">
+          {/* conduits */}
+          <Popover
+            isOpen={isConduitPopupOpen}
+            onClose={() => setConduitPopupOpen(false)}
+            isLazy
+            placement="right-start"
+          >
+            <PopoverTrigger>
+              <Stack
+                className="box clickable"
+                alignItems="flex-start"
+                onClick={() => setConduitPopupOpen(true)}
+              >
+                <Heading size="sm" as="h3">
+                  Conduits
+                </Heading>
+                {profile.conduits.map(conduitCode => {
+                  const conduitObj = conduitsIdx[conduitCode]!
+                  return (
+                    <WowIcon
+                      iconName={conduitObj.icon}
+                      label={conduitObj.label}
+                      key={conduitObj.code}
+                    />
+                  )
+                })}
+              </Stack>
+            </PopoverTrigger>
+            <PopoverContent width="unset">
+              <PopoverArrow />
+              <PopoverBody>
+                <ConduitBox
+                  className="popover-dialog"
+                  value={profile.conduits}
+                  onChange={genericChangeProfile}
+                />
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+          {/* tier set */}
+          <Stack className="box" marginTop={2} alignItems="flex-start">
+            <Heading size="sm" as="h3">
+              Tier set
+            </Heading>
+
+            <WowIcon
+              className="clickable"
+              iconName="ability_priest_innerlightandshadow"
+              label="Til Dawn (4p)"
+              isSelected={profile.enableTierSet}
+              isDisabled={!profile.enableTierSet}
+              onClick={toggleTierSet}
+            />
+          </Stack>
+        </Flex>
 
         {/* last column */}
         <Flex
           direction="column"
           flexGrow={1}
+          marginRight={0}
           sx={{
             ">.box": { marginRight: 0, marginBottom: 2 },
             ">.box:last-child": { marginBottom: 0 },
