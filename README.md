@@ -4,7 +4,7 @@ Simulates World of Warcraft's Discipline Priest's healing through combat simulat
 
 ## How does it work
 
-It this wasn't much planned the simulator is currently a bit of a mess.
+As this wasn't much planned the simulator is currently a bit of a mess.
 
 But this is roughly the idea:
 
