@@ -1,9 +1,11 @@
 import { Aura, auras } from "./auras"
-import { Auras } from "./aurasConstants"
+import { Auras } from "./constants/aurasConstants"
 import type { EncounterState } from "./EncounterState"
 import { Player } from "./Player"
-import { spells } from "./spells"
-import { Spells } from "./spellsConstants"
+import { CritBehavior, spells, VersBehavior } from "./spells"
+import type { Spell } from "./spells"
+import { Spells } from "./constants/spellsConstants"
+import { CritMode } from "./constants/enums"
 
 export type CombatEvent =
   | { id: number; type: "_queuenext" }
@@ -85,15 +87,64 @@ export interface EventTime {
 
 export type PickFromUn<Un, T extends string> = Un extends { type: T } ? Un : never
 
-function composeDamageMultiplier({ spell, caster }: { spell: Spells; caster: Player }) {
-  const casterMultSpell = caster.getDamageMultiplier(spell)
-  return (1 + caster.stats.getVersatilityPct()) * casterMultSpell
+function getCritVers({
+  spell,
+  caster,
+  critMode,
+}: {
+  spell: Spell
+  caster: Player
+  critMode: CritMode
+}) {
+  let crit = 1
+  if ((spell.critBehavior || CritBehavior.Default) === CritBehavior.Default) {
+    if (critMode === CritMode.Average) {
+      crit = 1 + caster.stats.getCriticalPct()
+    } else if (critMode === CritMode.Random) {
+      const ratio = caster.stats.getCriticalPct()
+      const roll = ratio - Math.random() <= 0
+      crit = roll ? 2 : 1
+    }
+  } else if (spell.critBehavior === CritBehavior.Never) {
+    crit = 1
+  } else if (spell.critBehavior === CritBehavior.Always) {
+    crit = 2
+  }
+  let vers = 1
+  if ((spell.versBehavior || VersBehavior.Default) === VersBehavior.Default) {
+    vers = 1 + caster.stats.getVersatilityPct()
+  } else if (spell.versBehavior === VersBehavior.Disable) {
+    vers = 1
+  }
+  return { crit, vers }
 }
 
-function composeHealingMultiplier({ spell, caster }: { spell: Spells; caster: Player }) {
-  const casterMultSpell = caster.getHealingMultiplier(spell)
-  const vers = spell === Spells.Atonement ? 0 : caster.stats.getVersatilityPct()
-  return (1 + vers) * casterMultSpell
+function composeDamageMultiplier({
+  spell,
+  caster,
+  critMode,
+}: {
+  spell: Spell
+  caster: Player
+  critMode: CritMode
+}) {
+  const { crit, vers } = getCritVers({ spell, caster, critMode })
+  const casterMultSpell = caster.getDamageMultiplier(spell.id)
+  return vers * crit * casterMultSpell
+}
+
+function composeHealingMultiplier({
+  spell,
+  caster,
+  critMode,
+}: {
+  spell: Spell
+  caster: Player
+  critMode: CritMode
+}) {
+  const { crit, vers } = getCritVers({ spell, caster, critMode })
+  const casterMultSpell = caster.getHealingMultiplier(spell.id)
+  return vers * crit * casterMultSpell
 }
 
 export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> = {
@@ -148,10 +199,13 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (event.calcValue && event.spell) {
       const spellInfo = spells[event.spell]
       if (!spellInfo) throw Error(`Spell ${event.spell} not found.`)
-      const composedMult = composeDamageMultiplier({ caster, spell: event.spell })
+      const composedMult = composeDamageMultiplier({
+        caster,
+        spell: spellInfo,
+        critMode: encounter.critMode,
+      })
       if (spellInfo.getDamage) {
         const value = spellInfo.getDamage(caster.stats.getStatRatings(), caster) * composedMult
-        // * (1 + caster.stats.getCriticalPct())
         event.value = value
       } else if (event.value) {
         event.value = event.value * composedMult
@@ -175,7 +229,11 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (event.calcValue) {
       if (spellInfo.getHealing) {
         const value = spellInfo.getHealing(caster.stats.getStatRatings(), caster)
-        const mult = composeHealingMultiplier({ spell: spellInfo.id, caster })
+        const mult = composeHealingMultiplier({
+          spell: spellInfo,
+          caster,
+          critMode: encounter.critMode,
+        })
         event.value = value * mult
       }
     }
@@ -228,9 +286,12 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
       if (auraInfo.dot) {
         const tickMult = event.auraModifiers?.tickPct || 1
         const hastePct = (1 + caster.stats.getHastePct()) * tickMult
+        const dotSpell = spells[auraInfo.dot.spell]
+        if (!dotSpell) throw Error(`Spell ${dotSpell} not found (auraInfo.dot).`)
         const composedMult = composeDamageMultiplier({
           caster,
-          spell: auraInfo.dot.spell,
+          spell: dotSpell,
+          critMode: encounter.critMode,
         })
         const damage =
           auraInfo.dot.getDoTDamage(caster.stats.getStatRatings(), auraInfo) *

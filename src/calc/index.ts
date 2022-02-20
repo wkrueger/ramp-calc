@@ -1,9 +1,10 @@
 import { Talents } from "../data/talents"
-import { Auras } from "./aurasConstants"
+import { Auras } from "./constants/aurasConstants"
 import { EncounterState } from "./EncounterState"
 import { EventLog } from "./EventLog"
-import { Spells } from "./spellsConstants"
+import { Spells } from "./constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
+import { CritMode } from "./constants/enums"
 
 export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
   let out = 0
@@ -27,6 +28,7 @@ export function getEncounterState(p: {
     playerStatRatings: p.playerStatRatings,
     talents: p.talents,
     conduits: p.conduits,
+    critMode: CritMode.Average,
   })
   return state
 }

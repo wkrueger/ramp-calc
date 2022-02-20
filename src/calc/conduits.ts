@@ -1,6 +1,6 @@
 import type { AuraInfo } from "./auras"
-import { Auras, DURATION_INFINITE } from "./aurasConstants"
-import { Spells } from "./spellsConstants"
+import { Auras, DURATION_INFINITE } from "./constants/aurasConstants"
+import { Spells } from "./constants/spellsConstants"
 import { MultCalc } from "./utl/conduitScale"
 
 const ascensionMult = new MultCalc({
@@ -37,7 +37,7 @@ const Exaltation: AuraInfo = {
   duration: DURATION_INFINITE,
   healingMultiplier: ({ aura }) => {
     const ssMult = 1 + exaltationMult.calc(aura.level!) / 100
-    return new Map([[Spells.SpiritShellHeal, ssMult]] as any)
+    return new Map([[Spells.SpiritShellHeal, ssMult]])
   },
 }
 
@@ -46,8 +46,28 @@ const RabidShadows: AuraInfo = {
   duration: DURATION_INFINITE,
 }
 
+const shiningRadianceMult = new MultCalc({
+  200: 56,
+  213: 60,
+  226: 64,
+  239: 68,
+  252: 72,
+  265: 76,
+  278: 80,
+})
+
+const ShiningRadiance: AuraInfo = {
+  id: Auras.ShiningRadiance,
+  duration: DURATION_INFINITE,
+  healingMultiplier: ({ aura }) => {
+    const mult = 1 + shiningRadianceMult.calc(aura.level!) / 100
+    return new Map([[Spells.Radiance, mult]])
+  },
+}
+
 export const conduits = {
   [Auras.CourageousAscension]: CourageousAscension,
   [Auras.Exaltation]: Exaltation,
   [Auras.RabidShadows]: RabidShadows,
+  [Auras.ShiningRadiance]: ShiningRadiance,
 }

@@ -7,7 +7,7 @@ import { default as React, MouseEventHandler } from "react"
 import { IconType } from "react-icons"
 import { FaHeart } from "react-icons/fa"
 import { GiBroadsword } from "react-icons/gi"
-import { Spells } from "../../calc/spellsConstants"
+import { Spells } from "../../calc/constants/spellsConstants"
 
 const styles: CSSObject = {
   textAlign: "center",

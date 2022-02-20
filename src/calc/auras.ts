@@ -1,9 +1,9 @@
-import { Auras, DURATION_INFINITE } from "./aurasConstants"
+import { Auras, DURATION_INFINITE } from "./constants/aurasConstants"
 import { conduits } from "./conduits"
 import type { EncounterState } from "./EncounterState"
-import type { CombatEvent, PickFromUn } from "./events"
+import type { CombatEvent, PickFromUn } from "./eventEffects"
 import type { Link } from "./ScheduledEvents"
-import { Spells } from "./spellsConstants"
+import { Spells } from "./constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 
 export interface Aura {

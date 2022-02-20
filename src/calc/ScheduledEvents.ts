@@ -1,4 +1,4 @@
-import { CombatEvent, EventTime } from "./events"
+import { CombatEvent, EventTime } from "./eventEffects"
 
 export interface Link {
   value: {

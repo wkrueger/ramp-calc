@@ -1,4 +1,4 @@
-import { EventTime } from "./events"
+import { EventTime } from "./eventEffects"
 
 type EventLogListener = (ev: EventTime) => void
 

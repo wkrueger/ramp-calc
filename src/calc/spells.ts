@@ -1,5 +1,5 @@
 import type { EncounterState } from "./EncounterState"
-import { Auras } from "./aurasConstants"
+import { Auras } from "./constants/aurasConstants"
 import {
   DamageEffect,
   HealEffect,
@@ -7,18 +7,29 @@ import {
   triggerContrition,
   triggerHealAsDamagePct,
 } from "./damageEffects"
-import type { CombatEvent, PickFromUn } from "./events"
+import type { CombatEvent, PickFromUn } from "./eventEffects"
 import type { Player } from "./Player"
-import { Spells } from "./spellsConstants"
+import { Spells } from "./constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 import { Talents } from "../data/talents"
 import { MultCalc } from "./utl/conduitScale"
 
-export enum Targetting {
+export const enum Targetting {
   Self,
   Enemy,
   Friendly,
   None,
+}
+
+export const enum CritBehavior {
+  Default,
+  Always,
+  Never,
+}
+
+export const enum VersBehavior {
+  Default,
+  Disable,
 }
 
 export interface Spell {
@@ -57,6 +68,8 @@ export interface Spell {
    *  which will use used instead of "allowed" for the UI.
    */
   allowedStatic?: (player: Player) => boolean
+  critBehavior?: CritBehavior
+  versBehavior?: VersBehavior
 }
 
 function PriestSpell(spell: Spell): Spell {
@@ -175,6 +188,8 @@ const Atonement: Spell = {
   icon: "ability_priest_atonement",
   targetting: Targetting.None,
   cast: 0,
+  critBehavior: CritBehavior.Never,
+  versBehavior: VersBehavior.Disable,
 }
 
 const Solace = PriestSpell({

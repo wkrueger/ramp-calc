@@ -1,7 +1,7 @@
 import { Heading, SimpleGrid, Stack } from "@chakra-ui/layout"
 import React, { memo } from "react"
 import { Spell, spells } from "../../calc/spells"
-import { Spells } from "../../calc/spellsConstants"
+import { Spells } from "../../calc/constants/spellsConstants"
 import { Affix, spellsWithAffix, WowIcon } from "../common/WowIcon"
 
 export function SpellsBox_({

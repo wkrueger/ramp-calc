@@ -1,9 +1,9 @@
 import type { EncounterState } from "./EncounterState"
-import { Auras } from "./aurasConstants"
-import type { CombatEvent, PickFromUn } from "./events"
+import { Auras } from "./constants/aurasConstants"
+import type { CombatEvent, PickFromUn } from "./eventEffects"
 import { Player } from "./Player"
 import type { Spell } from "./spells"
-import { Spells } from "./spellsConstants"
+import { Spells } from "./constants/spellsConstants"
 import { Talents } from "../data/talents"
 
 interface DamageEventContext {

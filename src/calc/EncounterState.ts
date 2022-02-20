@@ -1,18 +1,21 @@
 import { Talents } from "../data/talents"
-import { Auras } from "./aurasConstants"
+import { Auras } from "./constants/aurasConstants"
 import { conduits } from "./conduits"
 import { EventLog } from "./EventLog"
-import { CombatEvent, eventEffects } from "./events"
+import { CombatEvent, eventEffects } from "./eventEffects"
 import { Enemy, Player } from "./Player"
 import { ScheduledEvents } from "./ScheduledEvents"
 import { Spell, spells, Targetting } from "./spells"
-import { Spells } from "./spellsConstants"
+import { Spells } from "./constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
+import { CritMode } from "./constants/enums"
 
 export class EncounterState {
   private _eventIdCounter = 0
 
   GROUP_SIZE = 20
+
+  critMode: CritMode
 
   friendlyUnitsIdx: Map<string, Player>
   enemyUnitsIdx: Map<string, Enemy>
@@ -23,7 +26,13 @@ export class EncounterState {
   eventLog = new EventLog()
   time = 0
 
-  constructor(args: { playerStatRatings: StatRatingsIn; talents: Talents[]; conduits: Auras[] }) {
+  constructor(args: {
+    playerStatRatings: StatRatingsIn
+    talents: Talents[]
+    conduits: Auras[]
+    critMode: CritMode
+  }) {
+    this.critMode = args.critMode
     const friendlyUnits = Array(this.GROUP_SIZE)
       .fill(null)
       .map((_, idx) => {
