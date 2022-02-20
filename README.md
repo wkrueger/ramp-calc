@@ -10,4 +10,4 @@ But this is roughly the idea:
 
 ![diagram](docs/diagram.png)
 
-The main loop iterates over `scheduledEvents`. And events can generate new events, which I call "event effects".
+The main loop iterates over `scheduledEvents`. And events can generate new events, which I call "event effects". Processed events are removed from the scheduled queue and put into the combat log.
