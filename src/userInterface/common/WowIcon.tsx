@@ -48,7 +48,9 @@ export function WowIcon(props: {
   isDisabled?: boolean
   isSelected?: boolean
   affix?: (p: { className: string }) => JSX.Element
+  extension?: string
 }) {
+  const extension = props.extension || '.jpg'
   return (
     <Flex
       className={clsx(
@@ -64,7 +66,7 @@ export function WowIcon(props: {
         title={props.label}
         className={clsx(props.className, "wowicon")}
         onClick={props.onClick}
-        src={`wow-icons/${props.iconName}.jpg`}
+        src={`wow-icons/${props.iconName}${extension}`}
         alt={props.label}
       />
       {props.showLabel && <Text mt={1}>{props.label}</Text>}

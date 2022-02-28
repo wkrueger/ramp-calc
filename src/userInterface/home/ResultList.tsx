@@ -23,7 +23,7 @@ import { CalcResult, getEncounterState, getHealing } from "../../calc"
 import { Auras } from "../../calc/constants/aurasConstants"
 import { EventTime } from "../../calc/core/eventEffects"
 import { Spells } from "../../calc/constants/spellsConstants"
-import { Profile } from "../../data/profile"
+import { Profile } from "./profileState"
 import { numberFormat } from "../common/numberFormat"
 import { useDebounce } from "../common/useDebounce"
 import { WowIcon } from "../common/WowIcon"
@@ -115,6 +115,7 @@ export function ResultList({
     throttledProfile.talents,
     throttledProfile.conduits,
     throttledProfile.enableTierSet,
+    throttledProfile.legendaries,
     // fixme: if I pass root profile it infinite loops
   ])
 

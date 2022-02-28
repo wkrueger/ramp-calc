@@ -1,7 +1,8 @@
-import { presetsIdx } from "./presets"
-import { Talents } from "./talents"
-import { spells } from "../calc/priest/spells"
-import { StatRatingsIn } from "../calc"
+import { presetsIdx } from "../../data/presets"
+import { Talents } from "../../data/talents"
+import { spells } from "../../calc/priest/spells"
+import { StatRatingsIn } from "../../calc"
+import { Legendaries } from "../../calc/constants/legendariesConstants"
 
 export const initialProfile = {
   id: 1,
@@ -32,6 +33,7 @@ export const initialProfile = {
     })
     .map(spell => spell.id),
   enableTierSet: true,
+  legendaries: [] as Legendaries[]
 }
 
 export type Profile = typeof initialProfile

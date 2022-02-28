@@ -20,16 +20,18 @@ import _set from "lodash/set"
 import React, { memo, useCallback, useMemo } from "react"
 import { conduitsIdx } from "../../data/conduits"
 import { covenants } from "../../data/covenants"
-import { Profile } from "../../data/profile"
+import { Profile } from "./profileState"
 import { talentsIdx } from "../../data/talents"
 import { BasicEvent } from "../common/event"
 import { usePopupState } from "../common/usePopupState"
 import { WowIcon } from "../common/WowIcon"
 import { ConduitBox } from "./ConduitBox"
 import { CovenantBox } from "./CovenantBox"
+import { LegendaryBox } from "./innerBoxes/LegendaryBox"
 import { ResultList } from "./ResultList"
 import { SpellsList } from "./SpellsList"
 import { TalentBox } from "./TalentBox"
+import { legendariesInfoIdx } from "../../data/legendaries"
 
 export const STATS_INFO = [
   { label: "Intellect", code: "intellect" },
@@ -63,6 +65,7 @@ function ProfileBox_({
   const [isCovenantPopupOpen, setCovenantPopupOpen] = usePopupState()
   const [isTalentPopupOpen, setTalentPopupOpen] = usePopupState()
   const [isConduitPopupOpen, setConduitPopupOpen] = usePopupState()
+  const [isLegendaryPopupOpen, setLegendaryPopupOpen] = usePopupState()
 
   const setProfileName = useCallback(
     (nextName: string) => {
@@ -117,101 +120,154 @@ function ProfileBox_({
         <Button ml={2}>Inspect/replace gear...</Button> */}
       </Flex>
       <Flex className="profile-2nd-row" width="100%" pt={4} spacing={8} sx={containerStyles}>
-        {/* stats */}
-        <Stack className="box stats-box">
-          <Heading size="sm" as="h3">
-            Stats
-          </Heading>
-          <Stack>
-            {STATS_INFO.map(statInfo => {
-              return (
-                <HStack key={statInfo.code}>
-                  <Input
-                    width="8ch"
-                    textAlign="right"
-                    name={`stats.${statInfo.code}`}
-                    value={(profile.stats as any)[statInfo.code]}
-                    onChange={genericChangeProfile}
-                  />
-                  <Text flexGrow={1}>{statInfo.label}</Text>
-                </HStack>
-              )
-            })}
-          </Stack>
-        </Stack>
-
-        {/* covenants */}
-        <Popover
-          isOpen={isCovenantPopupOpen}
-          onClose={() => setCovenantPopupOpen(false)}
-          isLazy
-          placement="right-start"
-        >
-          <PopoverTrigger>
-            <Stack
-              className="box clickable"
-              alignItems="flex-start"
-              onClick={() => setCovenantPopupOpen(true)}
-            >
-              <Heading size="sm" as="h3">
-                Covenant
-              </Heading>
-              <WowIcon
-                iconName={covenantObject.icon}
-                label={covenantObject.label}
-                showLabel
-              ></WowIcon>
-            </Stack>
-          </PopoverTrigger>
-          <PopoverContent width="unset">
-            <PopoverArrow />
-            <PopoverBody>
-              <CovenantBox
-                className="popover-dialog"
-                value={profile.covenant}
-                onChange={setAndClosePopups(setCovenantPopupOpen)}
-              />
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
-
-        {/* talents */}
-        <Popover
-          isOpen={isTalentPopupOpen}
-          onClose={() => setTalentPopupOpen(false)}
-          isLazy
-          placement="right-start"
-        >
-          <PopoverTrigger>
-            <Stack
-              className="box clickable"
-              alignItems="flex-start"
-              onClick={() => setTalentPopupOpen(true)}
-            >
-              <Heading size="sm" as="h3">
-                Talents
-              </Heading>
-              {profile.talents.map(talentCode => {
-                const talentObj = talentsIdx[talentCode]
+        <div className="column">
+          {/* stats */}
+          <Stack className="box stats-box">
+            <Heading size="sm" as="h3">
+              Stats
+            </Heading>
+            <Stack>
+              {STATS_INFO.map(statInfo => {
                 return (
-                  <WowIcon key={talentObj.code} iconName={talentObj.icon} label={talentObj.label} />
+                  <HStack key={statInfo.code}>
+                    <Input
+                      width="8ch"
+                      textAlign="right"
+                      name={`stats.${statInfo.code}`}
+                      value={(profile.stats as any)[statInfo.code]}
+                      onChange={genericChangeProfile}
+                    />
+                    <Text flexGrow={1}>{statInfo.label}</Text>
+                  </HStack>
                 )
               })}
             </Stack>
-          </PopoverTrigger>
-          <PopoverContent width="unset">
-            <PopoverArrow />
-            <PopoverBody>
-              <TalentBox
-                className="popover-dialog"
-                value={profile.talents}
-                onChange={genericChangeProfile}
-              />
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
+          </Stack>
+        </div>
 
-        <Flex direction="column">
+        <Flex direction="column" className="column">
+          {/* covenants */}
+          <Popover
+            isOpen={isCovenantPopupOpen}
+            onClose={() => setCovenantPopupOpen(false)}
+            isLazy
+            placement="right-start"
+          >
+            <PopoverTrigger>
+              <Stack
+                className="box clickable"
+                alignItems="flex-start"
+                onClick={() => setCovenantPopupOpen(true)}
+              >
+                <Heading size="sm" as="h3">
+                  Covenant
+                </Heading>
+                <WowIcon
+                  iconName={covenantObject.icon}
+                  label={covenantObject.label}
+                  showLabel
+                ></WowIcon>
+              </Stack>
+            </PopoverTrigger>
+            <PopoverContent width="unset">
+              <PopoverArrow />
+              <PopoverBody>
+                <CovenantBox
+                  className="popover-dialog"
+                  value={profile.covenant}
+                  onChange={setAndClosePopups(setCovenantPopupOpen)}
+                />
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+
+          {/* legendaries */}
+          <Popover
+            isOpen={isLegendaryPopupOpen}
+            onClose={() => setLegendaryPopupOpen(false)}
+            isLazy
+            placement="right-start"
+          >
+            <PopoverTrigger>
+              <Stack
+                className="box clickable"
+                mt={2}
+                alignItems="flex-start"
+                onClick={() => setLegendaryPopupOpen(true)}
+              >
+                <Heading size="sm" as="h3">
+                  Legendaries
+                </Heading>
+                {profile.legendaries.map(legCode => {
+                  const legObj = legendariesInfoIdx[legCode]
+                  return <WowIcon iconName={legObj.icon} label={legObj.label} key={legObj.code} />
+                })}
+                {!profile.legendaries.length && (
+                  <WowIcon
+                    iconName="ui-emptyslot-disabled"
+                    extension=".png"
+                    label="Pick a legendary"
+                  />
+                )}
+              </Stack>
+            </PopoverTrigger>
+            <PopoverContent width="unset">
+              <PopoverArrow />
+              <PopoverBody>
+                <LegendaryBox
+                  className="popover-dialog"
+                  value={profile.legendaries}
+                  onChange={genericChangeProfile}
+                />
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        </Flex>
+
+        {/* talents */}
+
+        <div className="column">
+          <Popover
+            isOpen={isTalentPopupOpen}
+            onClose={() => setTalentPopupOpen(false)}
+            isLazy
+            placement="right-start"
+          >
+            <PopoverTrigger>
+              <Stack
+                className="box clickable"
+                alignItems="flex-start"
+                onClick={() => setTalentPopupOpen(true)}
+              >
+                <Heading size="sm" as="h3">
+                  Talents
+                </Heading>
+                {profile.talents.map(talentCode => {
+                  const talentObj = talentsIdx[talentCode]
+                  return (
+                    <WowIcon
+                      key={talentObj.code}
+                      iconName={talentObj.icon}
+                      label={talentObj.label}
+                    />
+                  )
+                })}
+              </Stack>
+            </PopoverTrigger>
+            <PopoverContent width="unset">
+              <PopoverArrow />
+              <PopoverBody>
+                <TalentBox
+                  className="popover-dialog"
+                  value={profile.talents}
+                  onChange={genericChangeProfile}
+                />
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <Flex direction="column" className="column">
           {/* conduits */}
           <Popover
             isOpen={isConduitPopupOpen}
@@ -271,6 +327,7 @@ function ProfileBox_({
         {/* last column */}
         <Flex
           direction="column"
+          className="column"
           flexGrow={1}
           marginRight={0}
           sx={{

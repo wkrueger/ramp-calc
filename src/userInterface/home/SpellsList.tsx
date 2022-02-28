@@ -14,7 +14,7 @@ import clsx from "clsx"
 import React, { useCallback, useMemo, useState } from "react"
 import { Spell, spells } from "../../calc/priest/spells"
 import { presets, presetsIdx } from "../../data/presets"
-import { Profile } from "../../data/profile"
+import { Profile } from "./profileState"
 import { Affix, spellsWithAffix, WowIcon } from "../common/WowIcon"
 import { SpellsBox } from "./SpellsBox"
 
