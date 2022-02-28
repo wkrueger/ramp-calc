@@ -1,8 +1,10 @@
 import { Heading, SimpleGrid, Stack } from "@chakra-ui/layout"
 import React, { memo } from "react"
-import { Spell, spells } from "../../../calc/priest/spells"
 import { Spells } from "../../../calc/constants/spellsConstants"
+import { getAllSpells, Spell } from "../../../calc/priest/spells"
 import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon"
+
+const spells = getAllSpells()
 
 export function SpellsBox_({
   availableSpells,

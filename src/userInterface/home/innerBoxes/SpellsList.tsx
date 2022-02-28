@@ -12,10 +12,11 @@ import {
 } from "@chakra-ui/react"
 import clsx from "clsx"
 import React, { useCallback, useMemo, useState } from "react"
-import { Spell, spells } from "../../../calc/priest/spells"
+import { Spells } from "../../../calc/constants/spellsConstants"
+import { getAllSpells, Spell } from "../../../calc/priest/spells"
 import { presets, presetsIdx } from "../../../data/presets"
-import { Profile } from "./../profileState"
 import { Affix, spellsWithAffix, WowIcon } from "../../common/WowIcon"
+import { Profile } from "./../profileState"
 import { SpellsBox } from "./SpellsBox"
 
 const containerStyles: CSSObject = {
@@ -103,6 +104,8 @@ export function SpellsList({
     [currentPosition, setProfile]
   )
 
+  const allSpells = getAllSpells()
+
   return (
     <Flex direction="column" className="box" sx={containerStyles} flexGrow={1}>
       <Box width="100%" position="relative" className="heading-group">
@@ -149,7 +152,7 @@ export function SpellsList({
                 }}
               >
                 {profile.spells.map((spellCode, idx) => {
-                  const spellObj = spells[spellCode]
+                  const spellObj = allSpells[spellCode as Spells]
                   const hasAffix = spellsWithAffix[spellObj.id]
                   const affix = hasAffix ? Affix(hasAffix) : undefined
                   const isInsertHere = idx === currentPosition

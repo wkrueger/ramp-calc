@@ -1,19 +1,19 @@
 import { Heading, SimpleGrid, Stack } from "@chakra-ui/react"
 import clsx from "clsx"
-import { Legendaries } from "../../../calc/constants/legendariesConstants"
+import { Auras } from "../../../calc/constants/aurasConstants"
 import { legendariesInfo } from "../../../data/legendaries"
 import { BasicEvent, createEvent } from "../../common/event"
 import { WowIcon } from "../../common/WowIcon"
 
 export interface LegendaryBoxProps {
   className?: string
-  value: Legendaries[]
+  value: Auras[]
   onChange: (ev: BasicEvent<string[]>) => any
 }
 
 export function LegendaryBox({ className, value, onChange }: LegendaryBoxProps) {
   const handleClick = (code: string) => (ev: any) => {
-    const active = value.includes(code as Legendaries)
+    const active = value.includes(code as Auras)
     if (!active && value.length >= 2) return
     const toSend = active ? value.filter(x => x !== code) : [...value, code]
     onChange(

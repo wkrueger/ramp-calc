@@ -7,6 +7,7 @@ import { Spells } from "../constants/spellsConstants"
 import { StatRatingsIn } from "../core/StatsHandler"
 import memo from "lodash/memoize"
 import type { Player } from "../core/Player"
+import { legendaries } from "./legendaries"
 
 export interface Aura {
   id: Auras
@@ -47,13 +48,10 @@ const Boon: AuraInfo = {
   id: Auras.Boon,
   duration: 10,
   onExpire(event, encounter) {
-    const { spells } = require("./spells") as typeof import("./spells")
+    const { getSpellInfo } = require("./spells") as typeof import("./spells")
     const player = encounter.friendlyUnitsIdx.get(event.target)!
-    const eruptionSpell = spells[Spells.AscendedEruption]
-    const currentTarget = encounter.getSpellTarget(
-      spells[Spells.AscendedEruption],
-      event.target
-    )[0]!
+    const eruptionSpell = getSpellInfo(Spells.AscendedEruption, player)
+    const currentTarget = encounter.getSpellTarget(eruptionSpell, event.target)[0]!
     const dmg = eruptionSpell.getDamage!(player.stats.getStatRatings(), player, {} as any) // danger
     encounter.scheduledEvents.push({
       time: encounter.time,
@@ -212,6 +210,7 @@ export const auras: Partial<Record<Auras, AuraInfo>> = {
   [Auras.PowerOfTheDarkSideProc]: PowerOfTheDarkSideProc,
   [Auras.TilDawn]: TilDawn,
   ...conduits,
+  ...legendaries,
 }
 
 const DbCoefs: Partial<Record<Auras, { db: number }>> = {

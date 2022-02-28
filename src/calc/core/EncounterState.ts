@@ -5,7 +5,7 @@ import { EventLog } from "./EventLog"
 import { CombatEvent, eventEffects } from "./eventEffects"
 import { Enemy, Player } from "./Player"
 import { ScheduledEvents } from "./ScheduledEvents"
-import { Spell, spells, Targetting } from "../priest/spells"
+import { getAllSpells, getSpellInfo, Spell, Targetting } from "../priest/spells"
 import { Spells } from "../constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
 import { CritMode } from "../constants/enums"
@@ -42,6 +42,7 @@ export class EncounterState {
           id: String(idx),
           statRatings: args.playerStatRatings,
           talents: toSetTalents,
+          encounterState: this,
         })
       })
     friendlyUnits[0].addAura({
@@ -84,6 +85,7 @@ export class EncounterState {
           aura,
           source: "0",
           target: "0",
+          spell: null,
         },
       })
     }
@@ -178,7 +180,7 @@ export class EncounterState {
     if (!caster) {
       throw Error(`Caster ${source} not found.`)
     }
-    const spellInfo = spells[spellId]
+    const spellInfo = getSpellInfo(spellId, caster)
     if (!spellInfo) {
       throw Error("Spell not found.")
     }
@@ -313,7 +315,7 @@ export class EncounterState {
             aura: spellInfo.applyAura,
             source: source,
             target: currentTarget,
-            auraModifiers: spellInfo.auraModifiers,
+            spell: spellInfo.id,
           },
         })
       }
@@ -334,6 +336,7 @@ export class EncounterState {
   }
 
   getAvailableSpells() {
+    const spells = getAllSpells()
     const availableSpells = Object.values(spells)
       .filter(spell => {
         if (spell.passive) return false

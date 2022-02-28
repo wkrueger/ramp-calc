@@ -2,7 +2,7 @@ import { Aura, auras } from "../priest/auras"
 import { Auras, DURATION_INFINITE } from "../constants/aurasConstants"
 import type { EncounterState } from "./EncounterState"
 import { Player } from "./Player"
-import { CritBehavior, spells, VersBehavior } from "../priest/spells"
+import { CritBehavior, getSpellInfo, VersBehavior } from "../priest/spells"
 import type { Spell } from "../priest/spells"
 import { Spells } from "../constants/spellsConstants"
 import { CritMode } from "../constants/enums"
@@ -69,11 +69,12 @@ export type CombatEvent =
       aura: Auras
       source: string
       target: string
-      auraModifiers?: {
-        durationPct?: number // radiance
-        durationSec?: number
-        tickPct?: number
-      }
+      spell: Spells | null
+      // auraModifiers?: {
+      //   durationPct?: number // radiance
+      //   durationSec?: number
+      //   tickPct?: number
+      // }
     }
   | {
       id: number
@@ -173,8 +174,8 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     event: PickFromUn<CombatEvent, "spell_channel_start">,
     encounter: EncounterState
   ) => {
-    const spellInfo = spells[event.spell]
     const caster = encounter.friendlyUnitsIdx.get(event.source)!
+    const spellInfo = getSpellInfo(event.spell, caster)
     if (spellInfo.onCastSuccess) {
       spellInfo.onCastSuccess(event as any, encounter, caster)
     }
@@ -186,7 +187,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
   ) => {
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
-    const spellInfo = spells[event.spell]
+    const spellInfo = getSpellInfo(event.spell, caster)
     const isAllowed = caster.spellIsAllowed(spellInfo)
     if (!isAllowed) throw Error(`Spell ${event.spell} not allowed now.`)
     {
@@ -212,7 +213,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
     if (event.calcValue && event.spell) {
-      const spellInfo = spells[event.spell]
+      const spellInfo = getSpellInfo(event.spell, caster)
       if (!spellInfo) throw Error(`Spell ${event.spell} not found.`)
       const composedMult = composeDamageMultiplier({
         caster,
@@ -227,7 +228,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
         event.value = event.value * composedMult
       }
     }
-    const spellInfo = spells[event.spell]
+    const spellInfo = getSpellInfo(event.spell, caster)
     if (!spellInfo) throw Error("Spell not found.")
     if (spellInfo.onDamage && spellInfo.onDamage.length) {
       spellInfo.onDamage.forEach(handler => {
@@ -238,7 +239,7 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
   heal: (event: PickFromUn<CombatEvent, "heal">, encounter: EncounterState) => {
     const caster = encounter.friendlyUnitsIdx.get(event.source)
     if (!caster) throw Error("Caster not found.")
-    const spellInfo = spells[event.spell]
+    const spellInfo = getSpellInfo(event.spell, caster)
     if (!spellInfo) {
       throw Error(`Spell ${event.spell} not found.`)
     }
@@ -272,11 +273,12 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
     if (!auraInfo) {
       throw Error(`Aura info not found for ${event.aura}.`)
     }
+    const spellInfo = event.spell ? getSpellInfo(event.spell, caster) : null
     if (event.source === caster.id) {
       caster.onEvent(event)
     }
-    const durationModifier = event.auraModifiers?.durationPct ?? 1
-    const durationModSec = event.auraModifiers?.durationSec || 0
+    const durationModifier = spellInfo?.auraModifiers?.durationPct ?? 1
+    const durationModSec = spellInfo?.auraModifiers?.durationSec || 0
     if (auraInfo.duration === DURATION_INFINITE) {
       const alreadyHasAura = target.getAura(event.aura)
       if (!alreadyHasAura) {
@@ -329,9 +331,9 @@ export const eventEffects: Record<string, (ev: any, en: EncounterState) => any> 
 
       target.addAura(aura)
       if (auraInfo.dot) {
-        const tickMult = event.auraModifiers?.tickPct || 1
+        const tickMult = spellInfo?.auraModifiers?.tickPct || 1
         const hastePct = (1 + caster.stats.getHastePct()) * tickMult
-        const dotSpell = spells[auraInfo.dot.spell]
+        const dotSpell = getSpellInfo(auraInfo.dot.spell, caster)
         if (!dotSpell) throw Error(`Spell ${dotSpell} not found (auraInfo.dot).`)
         const composedMult = composeDamageMultiplier({
           caster,

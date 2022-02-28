@@ -52,6 +52,8 @@ export interface Spell {
   applyAura?: Auras
   auraModifiers?: {
     durationPct?: number // radiance
+    durationSec?: number // exaltation
+    tickPct?: number
   }
   travelTime?: number
   passive?: boolean
@@ -81,6 +83,7 @@ export interface Spell {
   allowedStatic?: (player: Player) => boolean
   critBehavior?: CritBehavior
   versBehavior?: VersBehavior
+  override?(player: Player): Spell
 }
 
 function PriestSpell(spell: Spell): Spell {
@@ -161,7 +164,7 @@ const exaltationMult = new MultCalc({
   265: 9.5,
   278: 10,
 })
-const Shield = PriestSpell({
+const PowerWordShield = PriestSpell({
   id: Spells.Shield,
   label: "Power Word: Shield",
   icon: "spell_holy_powerwordshield",
@@ -179,6 +182,17 @@ const Shield = PriestSpell({
       }
     }
     return 1.65 * intellect * raptureMod
+  },
+  override(player) {
+    if (player.getAura(Auras.ClarityOfMind) && player.getAura(Auras.Rapture)) {
+      return {
+        ...this,
+        auraModifiers: {
+          durationPct: 1.5,
+        },
+      }
+    }
+    return this
   },
 })
 
@@ -243,6 +257,7 @@ const Radiance = PriestSpell({
           aura: Auras.PowerOfTheDarkSideProc,
           source: caster.id,
           target: caster.id,
+          spell: this.id,
         },
       })
     }
@@ -354,6 +369,7 @@ const Schism = PriestSpell({
         aura: Auras.Schism,
         source: caster.id,
         target: caster.id,
+        spell: this.id,
       },
     })
   },
@@ -370,18 +386,7 @@ const Evangelism = PriestSpell({
   },
   onCastSuccess(event, es, caster) {
     for (const unit of es.friendlyUnitsIdx.values()) {
-      const atonement = unit.getAura(Auras.Atonement)
-      if (!atonement) continue
-      const expirationEvent = atonement.links.find(
-        x => !x._removed && x.value.event.type === "aura_remove"
-      )
-      if (!expirationEvent) continue
-      atonement.expiredAt += 6
-      es.scheduledEvents.removeByLink(expirationEvent)
-      es.scheduledEvents.push({
-        event: { ...expirationEvent.value.event },
-        time: expirationEvent.value.time + 6,
-      })
+      unit.extendAura(Auras.Atonement, 6)
     }
   },
 })
@@ -392,28 +397,21 @@ const SpiritShellActivate = PriestSpell({
   icon: "ability_shaman_astralshift",
   targetting: Targetting.Self,
   cast: 0,
-  // applyAura: Auras.SpiritShellModifier,
+  applyAura: Auras.SpiritShellModifier,
   allowed(player) {
     return Boolean(player.getTalent(Talents.SpiritShell))
   },
   onCastSuccess(ev, es, caster) {
-    const hasExaltation = caster.getAura(Auras.Exaltation)
-    const modifiers = hasExaltation ? { durationSec: 1 } : undefined
-
-    const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
-    for (const currentTarget of currentTargets) {
-      es.scheduledEvents.push({
-        time: es.time,
-        event: {
-          id: es.createEventId(),
-          type: "aura_apply",
-          aura: Auras.SpiritShellModifier,
-          source: caster.id,
-          target: currentTarget,
-          auraModifiers: modifiers,
-        },
-      })
+    for (const player of es.friendlyUnitsIdx.values()) {
+      player.extendAura(Auras.Atonement, 3)
     }
+  },
+  override(caster) {
+    const hasExaltation = caster.getAura(Auras.Exaltation)
+    if (hasExaltation) {
+      return { ...this, auraModifiers: { durationSec: 1 } }
+    }
+    return this
   },
 })
 
@@ -520,9 +518,6 @@ const Rapture = PriestSpell({
   // applyAura: Auras.Rapture,
   cooldown: 90,
   onCastSuccess(ev, es, caster) {
-    const hasExaltation = caster.getAura(Auras.Exaltation)
-    const modifiers = hasExaltation ? { durationSec: 1 } : undefined
-
     const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
     for (const currentTarget of currentTargets) {
       es.scheduledEvents.push({
@@ -533,7 +528,7 @@ const Rapture = PriestSpell({
           aura: Auras.Rapture,
           source: caster.id,
           target: currentTarget,
-          auraModifiers: modifiers,
+          spell: this.id,
         },
       })
     }
@@ -546,6 +541,14 @@ const Rapture = PriestSpell({
     events.scheduledEvents.forEach(ev => {
       es.scheduledEvents.push(ev)
     })
+  },
+  override(caster) {
+    const hasExaltation = caster.getAura(Auras.Exaltation)
+    const modifiers = hasExaltation ? { durationSec: 1 } : undefined
+    return {
+      ...this,
+      auraModifiers: modifiers,
+    }
   },
 })
 
@@ -620,12 +623,6 @@ const Shadowfiend = PriestSpell({
     return !player.getTalent(Talents.Mindbender)
   },
   onCastSuccess(ev, es, caster) {
-    const rabidShadows = caster.getAura(Auras.RabidShadows)
-    let tickPct = 1
-    if (rabidShadows) {
-      tickPct = 1 + rabidShadowsMult.calc(rabidShadows.level!) / 100
-    }
-
     const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
     for (const currentTarget of currentTargets) {
       es.scheduledEvents.push({
@@ -636,11 +633,22 @@ const Shadowfiend = PriestSpell({
           aura: Auras.ShadowfiendAura,
           source: caster.id,
           target: currentTarget,
-          auraModifiers: {
-            tickPct,
-          },
+          spell: this.id,
         },
       })
+    }
+  },
+  override(caster) {
+    const rabidShadows = caster.getAura(Auras.RabidShadows)
+    let tickPct = 1
+    if (rabidShadows) {
+      tickPct = 1 + rabidShadowsMult.calc(rabidShadows.level!) / 100
+    }
+    return {
+      ...this,
+      auraModifiers: {
+        tickPct,
+      },
     }
   },
 })
@@ -666,12 +674,6 @@ const Mindbender = PriestSpell({
     return Boolean(player.getTalent(Talents.Mindbender))
   },
   onCastSuccess(ev, es, caster) {
-    const rabidShadows = caster.getAura(Auras.RabidShadows)
-    let tickPct = 1
-    if (rabidShadows) {
-      tickPct = 1 + rabidShadowsMult.calc(rabidShadows.level!) / 100
-    }
-
     const currentTargets = es.getSpellTarget(this, caster.id).map(t => t!.id)
     for (const currentTarget of currentTargets) {
       es.scheduledEvents.push({
@@ -682,11 +684,20 @@ const Mindbender = PriestSpell({
           aura: Auras.MindbenderAura,
           source: caster.id,
           target: currentTarget,
-          auraModifiers: {
-            tickPct,
-          },
+          spell: this.id,
         },
       })
+    }
+  },
+  override(caster) {
+    const rabidShadows = caster.getAura(Auras.RabidShadows)
+    let tickPct = 1
+    if (rabidShadows) {
+      tickPct = 1 + rabidShadowsMult.calc(rabidShadows.level!) / 100
+    }
+    return {
+      ...this,
+      auraModifiers: { tickPct },
     }
   },
 })
@@ -821,13 +832,13 @@ const HaloDamage = PriestSpell({
   getDamage,
 })
 
-export const spells: Record<string, Spell> = {
+const spells: Record<string, Spell> = {
   [Spells.Smite]: Smite,
   [Spells.Pain]: Pain,
   [Spells.PainDoT]: PainDoT,
   [Spells.PurgeTheWicked]: PurgeTheWicked,
   [Spells.PurgeTheWickedDoT]: PurgeTheWickedDoT,
-  [Spells.Shield]: Shield,
+  [Spells.Shield]: PowerWordShield,
   [Spells.Atonement]: Atonement,
   [Spells.Solace]: Solace,
   [Spells.Radiance]: Radiance,
@@ -859,6 +870,18 @@ export const spells: Record<string, Spell> = {
   [Spells.HaloDamage]: HaloDamage,
   [Spells.SpiritShellActivate]: SpiritShellActivate,
   [Spells.SpiritShellHeal]: SpiritShellHeal,
+}
+
+export function getSpellInfo(spell: Spells, player: Player) {
+  const info = spells[spell]
+  if (info.override) {
+    return info.override(player)
+  }
+  return info
+}
+
+export function getAllSpells() {
+  return spells
 }
 
 const DbCoefs: Record<string, { db: number }> = {

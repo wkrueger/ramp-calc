@@ -20,6 +20,11 @@ export const enum Auras {
   SwiftPenitence = "swift-penitence",
   // tier-set
   TilDawn = "til-dawn", //4pc
+  // legendaries
+  ClarityOfMind = "clarity-of-mind",
+  ThePenitentOne = "the-penitent-one",
+  ShadowWordManipulation = "shadow-word-manipulation",
+  SpheresHarmony = "spheres-harmony",
 }
 
 export const DURATION_INFINITE = Symbol()

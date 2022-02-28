@@ -24,12 +24,14 @@ export function getEncounterState(p: {
   playerStatRatings: StatRatingsIn
   talents: Talents[]
   conduits: Auras[]
+  legendaries: Auras[]
   hasTierSet: boolean
 }) {
   const otherAuras: Auras[] = []
   if (p.hasTierSet) {
     otherAuras.push(Auras.TilDawn)
   }
+  otherAuras.push(...p.legendaries)
   const state = new EncounterState({
     playerStatRatings: p.playerStatRatings,
     talents: p.talents,

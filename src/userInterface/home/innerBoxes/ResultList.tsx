@@ -86,6 +86,7 @@ export function ResultList({
         talents: throttledProfile.talents,
         conduits: throttledProfile.conduits as Auras[],
         hasTierSet: throttledProfile.enableTierSet,
+        legendaries: throttledProfile.legendaries,
       })
       setProfile(profile => {
         return {

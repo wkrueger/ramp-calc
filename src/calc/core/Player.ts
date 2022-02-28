@@ -5,6 +5,7 @@ import type { CombatEvent } from "./eventEffects"
 import type { Spell } from "../priest/spells"
 import { Spells } from "../constants/spellsConstants"
 import { StatRatingsIn, StatsHandler } from "./StatsHandler"
+import type { EncounterState } from "./EncounterState"
 
 // export type UnitState =
 //   | { type: "idle" }
@@ -28,6 +29,7 @@ export class Player {
   private damageMultAurasBySpell: Map<Spells, Map<Auras, number>>
   private healingMultAurasBySpell: Map<Spells, Map<Auras, number>>
   private atonementCount = 0
+  private encounterState: EncounterState
 
   private procBucket: Record<string, number> = {}
 
@@ -44,11 +46,17 @@ export class Player {
     10: 1.03,
   }
 
-  constructor(args: { id: string; statRatings: StatRatingsIn; talents?: Talents[] }) {
+  constructor(args: {
+    id: string
+    statRatings: StatRatingsIn
+    talents?: Talents[]
+    encounterState: EncounterState
+  }) {
     this.id = args.id
     this.stats = new StatsHandler({ ratings: args.statRatings })
     this.damageMultAurasBySpell = new Map()
     this.healingMultAurasBySpell = new Map()
+    this.encounterState = args.encounterState
     for (let talent of args.talents || []) {
       const obj = talentsIdx[talent]
       this.talents[talent] = obj
@@ -62,6 +70,22 @@ export class Player {
       return match && casterMatch
     })
     return found
+  }
+
+  // fixme: does not handle dot/hot ticks
+  extendAura(id: Auras, bySecs: number) {
+    const auraObj = this.getAura(id)
+    if (!auraObj) return
+    const expirationEvent = auraObj.links.find(
+      x => !x._removed && x.value.event.type === "aura_remove"
+    )
+    if (!expirationEvent) return
+    auraObj.expiredAt += bySecs
+    this.encounterState.scheduledEvents.removeByLink(expirationEvent)
+    this.encounterState.scheduledEvents.push({
+      event: { ...expirationEvent.value.event },
+      time: expirationEvent.value.time + bySecs,
+    })
   }
 
   addAura(aura: Aura) {
