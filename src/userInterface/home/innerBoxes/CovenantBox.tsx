@@ -1,7 +1,7 @@
 import { Heading, HStack, Stack } from "@chakra-ui/layout"
 import React from "react"
-import { BasicEvent, createEvent } from "../common/event"
-import { WowIcon } from "../common/WowIcon"
+import { BasicEvent, createEvent } from "../../common/event"
+import { WowIcon } from "../../common/WowIcon"
 
 export function CovenantBox({
   onChange,

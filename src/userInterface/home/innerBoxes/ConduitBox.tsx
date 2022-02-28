@@ -1,9 +1,9 @@
 import { Stack, Heading, SimpleGrid } from "@chakra-ui/layout"
 import clsx from "clsx"
 import React, { useCallback } from "react"
-import { BasicEvent, createEvent } from "../common/event"
-import { conduits } from "../../data/conduits"
-import { WowIcon } from "../common/WowIcon"
+import { BasicEvent, createEvent } from "../../common/event"
+import { conduits } from "../../../data/conduits"
+import { WowIcon } from "../../common/WowIcon"
 
 export function ConduitBox({
   className,

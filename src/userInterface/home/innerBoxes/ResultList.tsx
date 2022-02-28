@@ -19,14 +19,14 @@ import {
   useDisclosure,
 } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
-import { CalcResult, getEncounterState, getHealing } from "../../calc"
-import { Auras } from "../../calc/constants/aurasConstants"
-import { EventTime } from "../../calc/core/eventEffects"
-import { Spells } from "../../calc/constants/spellsConstants"
-import { Profile } from "./profileState"
-import { numberFormat } from "../common/numberFormat"
-import { useDebounce } from "../common/useDebounce"
-import { WowIcon } from "../common/WowIcon"
+import { CalcResult, getEncounterState, getHealing } from "../../../calc"
+import { Auras } from "../../../calc/constants/aurasConstants"
+import { EventTime } from "../../../calc/core/eventEffects"
+import { Spells } from "../../../calc/constants/spellsConstants"
+import { Profile } from "../profileState"
+import { numberFormat } from "../../common/numberFormat"
+import { useDebounce } from "../../common/useDebounce"
+import { WowIcon } from "../../common/WowIcon"
 
 type ResultsType = ({ type: "ok" } & CalcResult) | { type: "error"; error: any }
 
