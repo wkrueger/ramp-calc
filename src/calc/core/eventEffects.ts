@@ -1,11 +1,11 @@
-import { Aura, auras } from "./auras"
-import { Auras, DURATION_INFINITE } from "./constants/aurasConstants"
+import { Aura, auras } from "../priest/auras"
+import { Auras, DURATION_INFINITE } from "../constants/aurasConstants"
 import type { EncounterState } from "./EncounterState"
 import { Player } from "./Player"
-import { CritBehavior, spells, VersBehavior } from "./spells"
-import type { Spell } from "./spells"
-import { Spells } from "./constants/spellsConstants"
-import { CritMode } from "./constants/enums"
+import { CritBehavior, spells, VersBehavior } from "../priest/spells"
+import type { Spell } from "../priest/spells"
+import { Spells } from "../constants/spellsConstants"
+import { CritMode } from "../constants/enums"
 
 export type CombatEvent =
   | { id: number; type: "_queuenext" }

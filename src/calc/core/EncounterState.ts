@@ -1,14 +1,14 @@
-import { Talents } from "../data/talents"
-import { Auras } from "./constants/aurasConstants"
-import { conduits } from "./conduits"
+import { Talents } from "../../data/talents"
+import { Auras } from "../constants/aurasConstants"
+import { conduits } from "../priest/conduits"
 import { EventLog } from "./EventLog"
 import { CombatEvent, eventEffects } from "./eventEffects"
 import { Enemy, Player } from "./Player"
 import { ScheduledEvents } from "./ScheduledEvents"
-import { Spell, spells, Targetting } from "./spells"
-import { Spells } from "./constants/spellsConstants"
+import { Spell, spells, Targetting } from "../priest/spells"
+import { Spells } from "../constants/spellsConstants"
 import { StatRatingsIn } from "./StatsHandler"
-import { CritMode } from "./constants/enums"
+import { CritMode } from "../constants/enums"
 
 export class EncounterState {
   private _eventIdCounter = 0

@@ -1,5 +1,5 @@
-import type { EncounterState } from "./EncounterState"
-import { Auras } from "./constants/aurasConstants"
+import type { EncounterState } from "../core/EncounterState"
+import { Auras } from "../constants/aurasConstants"
 import {
   DamageEffect,
   HealEffect,
@@ -8,12 +8,12 @@ import {
   triggerHealAsDamagePct,
   triggerPowerOfTheDarkSide,
 } from "./damageEffects"
-import type { CombatEvent, PickFromUn } from "./eventEffects"
-import type { Player } from "./Player"
-import { Spells } from "./constants/spellsConstants"
-import { StatRatingsIn } from "./StatsHandler"
-import { Talents } from "../data/talents"
-import { MultCalc } from "./utl/conduitScale"
+import type { CombatEvent, PickFromUn } from "../core/eventEffects"
+import type { Player } from "../core/Player"
+import { Spells } from "../constants/spellsConstants"
+import { StatRatingsIn } from "../core/StatsHandler"
+import { Talents } from "../../data/talents"
+import { MultCalc } from "../utl/conduitScale"
 import { swiftPenitenceMult } from "./conduits"
 
 export const enum Targetting {

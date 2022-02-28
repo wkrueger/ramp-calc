@@ -1,7 +1,7 @@
-import { StatRatingsIn } from "../calc/StatsHandler"
 import { presetsIdx } from "./presets"
 import { Talents } from "./talents"
-import { spells } from "../calc/spells"
+import { spells } from "../calc/priest/spells"
+import { StatRatingsIn } from "../calc"
 
 export const initialProfile = {
   id: 1,

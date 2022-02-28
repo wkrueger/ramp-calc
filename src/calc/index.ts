@@ -1,10 +1,11 @@
 import { Talents } from "../data/talents"
 import { Auras } from "./constants/aurasConstants"
-import { EncounterState } from "./EncounterState"
-import { EventLog } from "./EventLog"
+import { EncounterState } from "./core/EncounterState"
+import { EventLog } from "./core/EventLog"
 import { Spells } from "./constants/spellsConstants"
-import { StatRatingsIn } from "./StatsHandler"
+import { StatRatingsIn } from "./core/StatsHandler"
 import { CritMode } from "./constants/enums"
+export * from "./core/StatsHandler"
 
 export function reduceEvents(args: { log: EventLog; type: "heal" | "dmg" }) {
   let out = 0

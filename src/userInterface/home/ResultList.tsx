@@ -21,7 +21,7 @@ import {
 import React, { useEffect, useState } from "react"
 import { CalcResult, getEncounterState, getHealing } from "../../calc"
 import { Auras } from "../../calc/constants/aurasConstants"
-import { EventTime } from "../../calc/eventEffects"
+import { EventTime } from "../../calc/core/eventEffects"
 import { Spells } from "../../calc/constants/spellsConstants"
 import { Profile } from "../../data/profile"
 import { numberFormat } from "../common/numberFormat"

@@ -1,4 +1,4 @@
-import { StatRatingsIn, StatsHandler } from "../calc/StatsHandler"
+import { StatRatingsIn, StatsHandler } from "../calc/core/StatsHandler"
 import _capitalize from "lodash/capitalize"
 
 const hasteData = [

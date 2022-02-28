@@ -1,9 +1,9 @@
-import { TalentInfo, Talents, talentsIdx } from "../data/talents"
-import { Aura, auras } from "./auras"
-import { Auras } from "./constants/aurasConstants"
+import { TalentInfo, Talents, talentsIdx } from "../../data/talents"
+import { Aura, auras } from "../priest/auras"
+import { Auras } from "../constants/aurasConstants"
 import type { CombatEvent } from "./eventEffects"
-import type { Spell } from "./spells"
-import { Spells } from "./constants/spellsConstants"
+import type { Spell } from "../priest/spells"
+import { Spells } from "../constants/spellsConstants"
 import { StatRatingsIn, StatsHandler } from "./StatsHandler"
 
 // export type UnitState =

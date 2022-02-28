@@ -1,12 +1,12 @@
-import { Auras, DURATION_INFINITE } from "./constants/aurasConstants"
+import { Auras, DURATION_INFINITE } from "../constants/aurasConstants"
 import { conduits } from "./conduits"
-import type { EncounterState } from "./EncounterState"
-import type { CombatEvent, PickFromUn } from "./eventEffects"
-import type { Link } from "./ScheduledEvents"
-import { Spells } from "./constants/spellsConstants"
-import { StatRatingsIn } from "./StatsHandler"
+import type { EncounterState } from "../core/EncounterState"
+import type { CombatEvent, PickFromUn } from "../core/eventEffects"
+import type { Link } from "../core/ScheduledEvents"
+import { Spells } from "../constants/spellsConstants"
+import { StatRatingsIn } from "../core/StatsHandler"
 import memo from "lodash/memoize"
-import type { Player } from "./Player"
+import type { Player } from "../core/Player"
 
 export interface Aura {
   id: Auras

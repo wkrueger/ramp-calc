@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react"
 import clsx from "clsx"
 import React, { useCallback, useMemo, useState } from "react"
-import { Spell, spells } from "../../calc/spells"
+import { Spell, spells } from "../../calc/priest/spells"
 import { presets, presetsIdx } from "../../data/presets"
 import { Profile } from "../../data/profile"
 import { Affix, spellsWithAffix, WowIcon } from "../common/WowIcon"

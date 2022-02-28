@@ -1,7 +1,7 @@
 import type { AuraInfo } from "./auras"
-import { Auras, DURATION_INFINITE } from "./constants/aurasConstants"
-import { Spells } from "./constants/spellsConstants"
-import { MultCalc } from "./utl/conduitScale"
+import { Auras, DURATION_INFINITE } from "../constants/aurasConstants"
+import { Spells } from "../constants/spellsConstants"
+import { MultCalc } from "../utl/conduitScale"
 
 const ascensionMult = new MultCalc({
   200: 35,
