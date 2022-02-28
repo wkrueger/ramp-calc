@@ -431,7 +431,8 @@ const PenanceFriendly = PriestSpell({
   targetting: Targetting.Friendly,
   cast: 2,
   channel: player => {
-    const nticks = player.getTalent(Talents.Castigation) ? 4 : 3
+    let nticks = player.getTalent(Talents.Castigation) ? 4 : 3
+    if (player.getAura(Auras.ThePenitentOne)) nticks += 3
     return { ticks: nticks }
   },
   travelTime: 0.4,
@@ -447,7 +448,10 @@ const PenanceFriendly = PriestSpell({
         swiftPenitenceValue = 1 + mult / 100
       }
     }
-    return 1.25 * intellect * swiftPenitenceValue
+    // if last 3 ticks and TPO on, deal 60% of damage (RNG fix)
+    const hasTpo = caster.getAura(Auras.ThePenitentOne)
+    const tpoMult = hasTpo && event.totalTicks! - event.tickNumber! <= 3 ? 0.6 : 1
+    return 1.25 * intellect * swiftPenitenceValue * tpoMult
   },
   onCastSuccess(event, es, caster) {
     const hasPOTS = caster.getAura(Auras.PowerOfTheDarkSideProc)
@@ -476,7 +480,8 @@ const PenanceEnemy = PriestSpell({
   cooldown: 9,
   travelTime: 0.4,
   channel: player => {
-    const nticks = player.getTalent(Talents.Castigation) ? 4 : 3
+    let nticks = player.getTalent(Talents.Castigation) ? 4 : 3
+    if (player.getAura(Auras.ThePenitentOne)) nticks += 3
     return { ticks: nticks }
   },
   getDamage(stats, caster, event) {
@@ -489,7 +494,10 @@ const PenanceEnemy = PriestSpell({
         swiftPenitenceValue = 1 + mult / 100
       }
     }
-    return prev * swiftPenitenceValue
+    // if last 3 ticks and TPO on, deal 60% of damage (RNG fix)
+    const hasTpo = caster.getAura(Auras.ThePenitentOne)
+    const tpoMult = hasTpo && event.totalTicks! - event.tickNumber! <= 3 ? 0.6 : 1
+    return prev * swiftPenitenceValue * tpoMult
   },
   onCastSuccess(event, es, caster) {
     const hasPOTS = caster.getAura(Auras.PowerOfTheDarkSideProc)

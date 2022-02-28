@@ -6,6 +6,12 @@ const clarityOfMind: AuraInfo = {
   duration: DURATION_INFINITE,
 }
 
+const thePenitentOne: AuraInfo = {
+  id: Auras.ThePenitentOne,
+  duration: DURATION_INFINITE,
+}
+
 export const legendaries = {
   [Auras.ClarityOfMind]: clarityOfMind,
+  [Auras.ThePenitentOne]: thePenitentOne,
 }
